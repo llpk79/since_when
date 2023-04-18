@@ -6,8 +6,6 @@ App opens to a list of events and lists how long since the last time it happened
 
 There are no popups asking to confirm updates and deletes. Deleting an event deletes all occurrences. If an event is misspelled, just delete and re-add.
 
-![img.png](img.png)
-
 Windows and Linux versions are available.
 
 ![Events](images/events.png)
