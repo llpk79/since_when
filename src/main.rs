@@ -1,31 +1,25 @@
-// Written in rust, using iced for the gui, and rusqlite for the database.
-// This app is to track the time since an Event has happened, expressed in days.
-// For example, the time since you last changed your oil, or the time since you last had a haircut.
-// The app is designed to be simple, and easy to use.
-// The app has three windows;
-//      - A window displaying a Calendar with occurrences of events tracked by the app.
-//          - The Calendar is displayed in a grid of 7 columns and 6 rows.
-//          - Each cell in the grid is a button labeled with the day of the month.
-//          - The month and year are displayed above the Calendar.
-//          - Arrow buttons allow the user to navigate between months.
-//      - Clicking a Calendar date opens a page for entering new events and
-//          listing currently tracked events for that day.
-//          - A text box allows the user to enter a new event.
-//          - A button labeled "Add" allows the user to add the event to the database.
-//          - A list of events tracked for the day is displayed.
-//          - Elapsed time in days since the last event and average time between events are
-//          displayed to the left of the event name.
-//          - An update and delete button are to the left of the event name.
-//          - Clicking the "Update" button adds an Occurrence of the event to the database.
-//          - Clicking the "Delete" button removes the event from the database.
-//          - Clicking the "Delete" or "Update" button prompts the user to confirm the action.
-//      - The main page showing all events tracked by the app and elapsed time since the event.
-//          - Elapsed time in days since the last event and average time between events are
-//          displayed to the left of the event name.
-//          - An update and delete button are to the left of the event name.
-//          - Clicking the "Update" button adds an Occurrence of the event to the database.
-//          - Clicking the "Delete" button removes the event from the database.
-//          - Clicking the "Delete" or "Update" button prompts the user to confirm the action.
+/*
+Written in rust, using iced for the gui, and rusqlite for the database.
+This app is to track the time since an Event has happened, expressed in days.
+For example, the time since you last changed your oil, or the time since you last had a haircut.
+The app is designed to be simple, and easy to use.
+The app has three windows;
+     - A window displaying a Calendar.
+         - The Calendar is displayed in a grid of 7 columns and 6 rows.
+         - Each cell in the grid is a button labeled with the day of the month.
+         - The month and year are displayed above the Calendar.
+         - Arrow buttons allow the user to navigate between months.
+     - Clicking a Calendar date opens a page for entering new events.
+         - A text box allows the user to enter a new event.
+         - A button labeled "Add" allows the user to add the event to the database.
+         - Clicking the "Update" button adds an Occurrence of the event to the database.
+         - Clicking the "Delete" button removes the event from the database.
+     - The main page showing all events tracked by the app and elapsed time since the event.
+         - A list of events tracked for the day is displayed.
+         - Elapsed time in days since the last event and average time between events are
+         displayed to the left of the event name.
+         - A button labeled Calendar is displayed at the bottom of the page.
+*/
 
 mod add_event;
 mod calendar;
@@ -35,13 +29,13 @@ use iced::widget::{container, scrollable};
 use iced::{executor, Application, Command, Element, Length, Settings};
 use rusqlite::{params, Connection, Result};
 
-// Setup rusqlite connection.
+/// Setup rusqlite connection.
 pub fn setup_connection() -> Result<Connection, rusqlite::Error> {
     let conn = Connection::open("since_when.db")?;
     Ok(conn)
 }
 
-// Setup the database tables.
+/// Setup the database tables.
 pub fn setup_tables(conn: &Connection) {
     match conn.execute(
         "CREATE TABLE IF NOT EXISTS events (
@@ -72,36 +66,37 @@ pub fn setup_tables(conn: &Connection) {
             println!("Error creating table: {}", e);
         }
     }
-    // // Insert test event.
-    // match conn.execute(
-    //     "INSERT INTO events (name) VALUES (?1), (?2);",
-    //     params!["Pooper empty", "Propane tank full"],
-    // ) {
-    //     Ok(inserted) => {
-    //         println!("Record inserted: {}", inserted);
-    //         // Insert test occurrence.
-    //         match conn.execute(
-    //             "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
-    //             params![
-    //                 1i32,
-    //                 "2023-04-01".to_string(),
-    //                 2i32,
-    //                 "2023-04-12".to_string(),
-    //                 1i32,
-    //                 "2023-04-06".to_string(),
-    //                 1i32,
-    //                 "2023-04-11".to_string(),
-    //             ],
-    //         ) {
-    //             Ok(inserted) => println!("Record inserted: {}", inserted),
-    //             Err(e) => println!("Error inserting record: {}", e),
-    //         }
-    //     }
-    //     Err(e) => println!("Error inserting record: {}", e),
-    // }
 }
 
-// Application struct.
+pub fn insert_test_event(conn: &Connection) {
+    match conn.execute(
+        "INSERT INTO events (name) VALUES (?1), (?2);",
+        params!["Pooper empty", "Propane tank full"],
+    ) {
+        Ok(inserted) => {
+            println!("Record inserted: {}", inserted);
+            // Insert test occurrence.
+            match conn.execute(
+                "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
+                params![
+                    1i32,
+                    "2023-04-01".to_string(),
+                    2i32,
+                    "2023-04-12".to_string(),
+                    1i32,
+                    "2023-04-06".to_string(),
+                    1i32,
+                    "2023-04-11".to_string(),
+                ],
+            ) {
+                Ok(inserted) => println!("Record inserted: {}", inserted),
+                Err(e) => println!("Error inserting record: {}", e),
+            }
+        }
+        Err(e) => println!("Error inserting record: {}", e),
+    }
+}
+/// Application struct.
 struct SinceWhen {
     day: u32,
     month: u32,
@@ -112,6 +107,7 @@ struct SinceWhen {
     add_event: add_event::AddEvent,
 }
 
+/// Application messages.
 #[derive(Debug, Clone)]
 pub enum AppMessage {
     NextMonth,
@@ -125,6 +121,7 @@ pub enum AppMessage {
     TextEvent(String),
 }
 
+/// Application pages.
 #[derive(Debug, Clone, Copy)]
 pub enum Page {
     Calendar,
@@ -132,17 +129,18 @@ pub enum Page {
     AddEvent,
 }
 
-// The SinceWhen application.
+/// The SinceWhen application.
 impl Application for SinceWhen {
     type Executor = executor::Default;
     type Message = AppMessage;
     type Theme = Theme;
     type Flags = ();
 
-    // Creates a new app.
+    /// Creates a new app.
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
         let conn = setup_connection().unwrap();
         setup_tables(&conn);
+        // insert_test_event(&conn);
         (
             Self {
                 day: 0,
@@ -156,9 +154,15 @@ impl Application for SinceWhen {
             Command::none(),
         )
     }
+
+    /// The title of the application.
     fn title(&self) -> String {
         String::from("Since When?")
     }
+
+    /// The update function.
+    ///
+    /// This function is called when a message is received.
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         // println!("Message: {:?}", message);
         match message {
@@ -200,17 +204,17 @@ impl Application for SinceWhen {
                 );
             }
             AppMessage::DeleteEvent => {
-                let _ = self.add_event.update(
-                    AppMessage::DeleteEvent,
-                    self.day,
-                    self.month,
-                    self.year,
-                );
+                let _ =
+                    self.add_event
+                        .update(AppMessage::DeleteEvent, self.day, self.month, self.year);
             }
         }
         Command::none()
     }
 
+    /// The view function.
+    ///
+    /// This function is called when the application needs to be drawn.
     fn view(&self) -> Element<'static, Self::Message> {
         let content = match self.current_page {
             Page::Calendar => self.calendar.view(),
@@ -226,6 +230,7 @@ impl Application for SinceWhen {
     }
 }
 
+/// The main function.
 pub fn main() -> iced::Result {
     SinceWhen::run(Settings::default())
 }

@@ -8,14 +8,14 @@ const TEXT_SIZE: u16 = 40;
 const SPACING: u16 = 20;
 const ADD_BUTTON_SIZE: u16 = 225;
 
-// AddEvent state.
+/// AddEvent state.
 #[derive(Debug, Clone)]
 pub struct AddEvent {
     date: chrono::NaiveDate,
     event: String,
 }
 
-// AddEvent implementation.
+/// AddEvent implementation.
 impl<'a> AddEvent {
     pub fn new() -> AddEvent {
         Self {
@@ -24,6 +24,17 @@ impl<'a> AddEvent {
         }
     }
 
+    /// Get the id of the event.
+    fn get_event_id(&self, conn: &rusqlite::Connection) -> i32 {
+        let mut id_stmt = conn
+            .prepare("SELECT id FROM events WHERE name = ?1;")
+            .unwrap();
+        id_stmt
+            .query_row(params![&self.event], |row| row.get(0))
+            .unwrap()
+    }
+
+    /// Update the state of the AddEvent page.
     pub fn update(
         &mut self,
         message: AppMessage,
@@ -44,12 +55,7 @@ impl<'a> AddEvent {
                     Ok(id) => {
                         println!("Event added: {}", id);
                         // Get the id of the event we just added.
-                        let mut id_stmt = conn
-                            .prepare("SELECT id FROM events WHERE name = ?1;")
-                            .unwrap();
-                        let id: i32 = id_stmt
-                            .query_row(params![&self.event], |row| row.get(0))
-                            .unwrap();
+                        let id = self.get_event_id(&conn);
                         // Add the occurrence to the database.
                         let mut occur_stmt = conn
                             .prepare("INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);")
@@ -72,12 +78,7 @@ impl<'a> AddEvent {
                 };
             }
             AppMessage::UpdateEvent => {
-                let mut id_stmt = conn
-                    .prepare("SELECT id FROM events WHERE name = ?1;")
-                    .unwrap();
-                let id: i32 = id_stmt
-                    .query_row(params![&self.event], |row| row.get(0))
-                    .unwrap();
+                let id = self.get_event_id(&conn);
                 // Add the occurrence to the database.
                 let mut occur_stmt = conn
                     .prepare("INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);")
@@ -95,17 +96,14 @@ impl<'a> AddEvent {
             }
             AppMessage::DeleteEvent => {
                 // Get id of event.
-                let mut id_stmt = conn
-                    .prepare("SELECT id FROM events WHERE name = ?1;")
-                    .unwrap();
-                let id: i32 = id_stmt
-                    .query_row(params![&self.event], |row| row.get(0))
-                    .unwrap();
+                let id = self.get_event_id(&conn);
                 // Delete occurrence.
                 match conn.execute("DELETE FROM occurrences WHERE event_id = ?1;", params![id]) {
                     Ok(id) => {
                         println!("Occurrence deleted: {}", id);
-                        match conn.execute("DELETE FROM events WHERE name = ?1;", params![&self.event]) {
+                        match conn
+                            .execute("DELETE FROM events WHERE name = ?1;", params![&self.event])
+                        {
                             Ok(id) => {
                                 println!("Event deleted: {}", id);
                             }
@@ -129,7 +127,7 @@ impl<'a> AddEvent {
         }
         Command::none()
     }
-    // View for AddEvent.
+    /// View for AddEvent.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
         let date = chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap();
         let date_text = text(date.format("%A, %B %e, %Y").to_string())
@@ -138,7 +136,6 @@ impl<'a> AddEvent {
             .width(500);
         let input = text_input("Event Title", &self.event)
             .on_input(AppMessage::TextEvent)
-            // .on_submit(AppMessage::AddEvent)
             .size(TEXT_SIZE)
             .width(500);
         let add_button = button(

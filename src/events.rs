@@ -11,17 +11,17 @@ const TEXT_SIZE: u16 = 50;
 const SPACING: u16 = 20;
 const PADDING: u16 = 5;
 
-// Event state.
+/// Event state.
 #[derive(Debug, Clone)]
 pub struct EventOccurrence {
     name: String,
     date: String,
 }
 
-// Get events from the database.
+/// Get events from the database.
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     println!("Retrieving Records.");
-    // Get the most recent of all events.
+    // Get all events and occurrences.
     let mut stmt = conn.prepare(
         "\
         SELECT name, date \
@@ -38,22 +38,22 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     })?;
     let mut events = Vec::new();
     for event in event_iter {
-        // println!("Event: {:?}", &event);
         events.push(event.unwrap());
     }
     Ok(events)
 }
 
-// Events page struct.
+/// Events page struct.
 #[derive(Debug, Clone)]
 pub struct EventsPage {}
 
-//Events page implementation.
+///Events page implementation.
 impl<'a> EventsPage {
     pub fn new() -> EventsPage {
         Self {}
     }
 
+    /// Get the days since today for each occurrence for each event.
     pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
         let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
         for event in events.iter() {
@@ -72,6 +72,7 @@ impl<'a> EventsPage {
         days_since_now
     }
 
+    /// Get the elapsed days between each occurrence for each event.
     pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
         let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
         for item in days_since.iter() {
@@ -92,6 +93,7 @@ impl<'a> EventsPage {
         elapsed
     }
 
+    /// Get the average elapsed days between occurrences for each event.
     pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
         let mut averages: HashMap<String, Vec<i32>> = HashMap::new();
         for item in elapsed.iter() {
@@ -110,6 +112,7 @@ impl<'a> EventsPage {
         averages
     }
 
+    /// View the events page.
     pub fn view(&self) -> Element<'a, AppMessage> {
         // Open the database.
         let conn = Connection::open("since_when.db").unwrap();
@@ -143,6 +146,7 @@ impl<'a> EventsPage {
         date_column = date_column.push(date_text);
         avg_column = avg_column.push(avg_text);
 
+        // Create the event rows.
         for days_since in days_since_now.iter() {
             let mut plural = String::new();
             let days = days_since.1[0];
