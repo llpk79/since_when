@@ -1,8 +1,9 @@
-use crate::AppMessage;
+use crate::{AppMessage, utils};
+use crate::database;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
 use iced::{theme, Alignment, Command, Element};
-use rusqlite::{Connection, Result, params};
+use chrono::NaiveDate;
 
 const TEXT_SIZE: u16 = 40;
 const SPACING: u16 = 20;
@@ -11,7 +12,7 @@ const ADD_BUTTON_SIZE: u16 = 225;
 /// AddEvent state.
 #[derive(Debug, Clone)]
 pub struct AddEvent {
-    date: chrono::NaiveDate,
+    date: NaiveDate,
     event: String,
 }
 
@@ -19,89 +20,15 @@ pub struct AddEvent {
 impl<'a> AddEvent {
     pub fn new() -> AddEvent {
         Self {
-            date: chrono::NaiveDate::from_ymd_opt(1, 3, 3).unwrap(),
+            date: match NaiveDate::from_ymd_opt(1, 2, 3) {
+                Some(date) => date,
+                None => {
+                    panic!("Error creating date");
+                }
+            },
             event: String::new(),
         }
     }
-
-    /// Perform a SQL insert with variable parameters.
-    ///
-    /// # Arguments
-    /// - conn: &rusqlite::Connection - The data_base connection.
-    /// - id: (i32, bool) - The id of the event to insert.
-    /// - date: (&str, bool) - The date of the occurrence to insert.
-    /// - event: (&str, bool) - The name of the event to insert.
-    ///     - The bool portion of the tuple is a flag to determine if the parameter should be used.
-    /// - sql: &str - The SQL statement to execute.
-    ///
-    /// # Returns
-    /// - Result<i32, rusqlite::Error> - bool success flag.
-    fn sql_insert(
-        &self,
-        conn: &Connection,
-        id: (i32, bool),
-        date: (&str, bool),
-        event: (&str, bool),
-        sql: &str,
-    ) -> Result<i32, rusqlite::Error> {
-        let mut stmt = conn.prepare(sql).unwrap();
-        // Match on the flags to determine which parameters to use.
-        match (id.1, date.1, event.1) {
-            // Add occurrence.
-            (true, true, false) => match stmt.execute(params![id.0, date.0]) {
-                Ok(success) => success,
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    0
-                }
-            },
-            // Add event.
-            (false, false, true) => match stmt.execute(params![event.0]) {
-                Ok(success) => success,
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    0
-                }
-            },
-            // Update or delete event.
-            (true, false, false) => match stmt.execute(params![id.0]) {
-                Ok(success) => success,
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    0
-                }
-            },
-            _ => 0, // This should never happen.
-        };
-        Ok(id.0)
-    }
-
-    /// Get the id of the event.
-    ///
-    /// # Arguments
-    /// - conn: &rusqlite::Connection - The data_base connection.
-    ///
-    /// # Returns
-    /// - i32 - The id of the event.
-    fn get_event_id(&self, conn: &Connection) -> i32 {
-        struct ID {
-            id: i32,
-        }
-        println!("Getting event id for {:?}", &self.event);
-        let mut id_stmt = conn
-            .prepare("SELECT id FROM events WHERE name = ?1;")
-            .unwrap();
-        let ID { id } =
-            match id_stmt.query_row(params![&self.event], |row| Ok(ID { id: row.get(0)? })) {
-                Ok(id) => id,
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    ID { id: 0 }
-                }
-            };
-        id
-    }
-
 
     /// Update the state of the AddEvent page.
     ///
@@ -120,14 +47,13 @@ impl<'a> AddEvent {
         month: u32,
         year: i32,
     ) -> Command<AppMessage> {
-        let conn = Connection::open("since_when.db").unwrap();
-        self.date = chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let conn = database::setup_connection();
+        self.date = utils::get_date(year, month, day);
         match message {
             AppMessage::AddEvent => {
                 println!("Adding Event {:?} on {:?}", &self.event, &self.date);
                 // Add the event to the data_base.
-                match Self::sql_insert(
-                    self,
+                match database::sql_insert(
                     &conn,
                     (0, false),
                     ("", false),
@@ -136,10 +62,9 @@ impl<'a> AddEvent {
                 ) {
                     Ok(_) => {
                         println!("Event added: {:?}", &self.event);
-                        let id = self.get_event_id(&conn);
+                        let id = database::get_event_id(&conn, &self.event);
                         // Add the occurrence to the data_base.
-                        match Self::sql_insert(
-                            self,
+                        match database::sql_insert(
                             &conn,
                             (id, true),
                             (&self.date.to_string(), true),
@@ -161,10 +86,9 @@ impl<'a> AddEvent {
                 };
             }
             AppMessage::UpdateEvent => {
-                let id = self.get_event_id(&conn);
+                let id = database::get_event_id(&conn, &self.event);
                 // Add the occurrence to the data_base.
-                match Self::sql_insert(
-                    self,
+                match database::sql_insert(
                     &conn,
                     (id, true),
                     (&self.date.to_string(), true),
@@ -180,10 +104,9 @@ impl<'a> AddEvent {
                 };
             }
             AppMessage::DeleteEvent => {
-                let id = self.get_event_id(&conn);
+                let id = database::get_event_id(&conn, &self.event);
                 // Delete occurrence.
-                match Self::sql_insert(
-                    self,
+                match database::sql_insert(
                     &conn,
                     (id, true),
                     ("", false),
@@ -193,8 +116,7 @@ impl<'a> AddEvent {
                     Ok(_) => {
                         println!("Occurrences deleted.");
                         // Delete event.
-                        match Self::sql_insert(
-                            self,
+                        match database::sql_insert(
                             &conn,
                             (0, false),
                             ("", false),
@@ -235,7 +157,7 @@ impl<'a> AddEvent {
     /// # Returns
     /// - Element<'a, AppMessage> - The view.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
-        let date = chrono::NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let date = utils::get_date(year, month, day);
         let date_text = text(date.format("%A, %B %e, %Y").to_string())
             .horizontal_alignment(Horizontal::Center)
             .size(TEXT_SIZE)

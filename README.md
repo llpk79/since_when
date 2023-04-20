@@ -2,7 +2,7 @@
 
 ### A simple tool to track how long since something happened.
 
-App opens to a list of events and lists how long since the last time it happened, and the average time between occurrences.
+App opens to a list of events showing how long it's been since the last time an event occurred, and the average time between occurrences.
 
 There are no popups asking to confirm updates and deletes. Deleting an event deletes all occurrences. If an event is misspelled, just delete and re-add.
 

@@ -1,4 +1,5 @@
 use crate::AppMessage;
+use crate::utils;
 use chrono::Datelike;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, row, text, Column, Row};
@@ -97,7 +98,10 @@ impl<'a> Calendar {
             .on_press(AppMessage::NextMonth);
 
         // Display the current month and year.
-        let month = chrono::Month::from_u32(self.month).unwrap();
+        let month = match chrono::Month::from_u32(self.month) {
+            Some(month) => month,
+            None => panic!("Invalid month"),
+        };
         let text_month = text(format!("{:?} - {}", month, self.year)).size(TEXT_SIZE);
         // Create a row with the prev and next month buttons and the current month and year.
         let nav_row = row![prev_button, text_month, next_button]
@@ -114,25 +118,21 @@ impl<'a> Calendar {
         // Draw the Calendar.
         let month_lengths = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
         // Get the first weekday of the month to determine where to start the Calendar.
-        let first_day = chrono::NaiveDate::from_ymd_opt(self.year, self.month, 1)
-            .unwrap()
-            .weekday();
-        let from_sun = first_day.num_days_from_sunday() as i32;
+        let first_day = utils::get_date(self.year, self.month, 1);
+        let weekday = first_day.weekday();
+        let from_sun = weekday.num_days_from_sunday() as i32;
         let offset = from_sun - 1;
         let mut calendar_row = make_new_row();
         let mut day: u32;
         let mut print_day: String;
         for i in 0..42 {
             if (from_sun <= i) && (i < month_lengths[(self.month - 1) as usize] + offset + 1) {
-                day = (i - offset) as u32
+                day = (i - offset) as u32;
+                print_day = format!("{}", day)
             } else {
-                day = 0
-            };
-            if day > 0 {
-                print_day = format!("{}", day);
-            } else {
+                day = 0;
                 print_day = " ".to_string()
-            }
+            };
             calendar_row = calendar_row.push(
                 button(
                     text(print_day)

@@ -21,10 +21,13 @@ The app has three windows;
          - A button labeled Calendar is displayed at the bottom of the page.
 */
 
+extern crate core;
+
 mod add_event;
 mod calendar;
 mod events;
 mod database;
+mod utils;
 use iced::theme::Theme;
 use iced::widget::{container, scrollable};
 use iced::{executor, Application, Command, Element, Length, Settings};
@@ -47,11 +50,11 @@ pub enum AppMessage {
     NextMonth,
     PreviousMonth,
     DayClicked(u32, u32, i32),
+    AddEvent,
     UpdateEvent,
     DeleteEvent,
     CalendarWindow,
     EventsWindow,
-    AddEvent,
     TextEvent(String),
 }
 
@@ -78,7 +81,7 @@ impl Application for SinceWhen {
     /// # Returns
     /// - (Self, Command<AppMessage>)
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
-        let conn = database::setup_connection().unwrap();
+        let conn = database::setup_connection();
         database::setup_tables(&conn);
         // insert_test_event(&conn);
         (
@@ -103,14 +106,6 @@ impl Application for SinceWhen {
         String::from("Since When?")
     }
 
-    /// The application theme.
-    ///
-    /// # Returns
-    /// - Self::Theme
-    fn theme(&self) -> Self::Theme {
-        Theme::Dark
-    }
-
     /// The update function.
     ///
     /// # Arguments
@@ -127,6 +122,9 @@ impl Application for SinceWhen {
                 let _ = self.calendar.update(AppMessage::PreviousMonth);
             }
             AppMessage::DayClicked(day, month, year) => {
+                if day == 0 {
+                    return Command::none();
+                }
                 self.day = day;
                 self.month = month;
                 self.year = year;
@@ -182,6 +180,14 @@ impl Application for SinceWhen {
             .center_x()
             .center_y()
             .into()
+    }
+
+    /// The application theme.
+    ///
+    /// # Returns
+    /// - Self::Theme
+    fn theme(&self) -> Self::Theme {
+        Theme::Dark
     }
 }
 
