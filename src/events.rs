@@ -18,31 +18,6 @@ pub struct EventOccurrence {
     date: String,
 }
 
-/// Get events from the database.
-pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
-    println!("Retrieving Records.");
-    // Get all events and occurrences.
-    let mut stmt = conn.prepare(
-        "\
-        SELECT name, date \
-        FROM events \
-        JOIN occurrences \
-        ON events.id = occurrences.event_id \
-        ORDER BY date DESC;",
-    )?;
-    let event_iter = stmt.query_map([], |row| {
-        Ok(EventOccurrence {
-            name: row.get(0)?,
-            date: row.get(1)?,
-        })
-    })?;
-    let mut events = Vec::new();
-    for event in event_iter {
-        events.push(event.unwrap());
-    }
-    Ok(events)
-}
-
 /// Events page struct.
 #[derive(Debug, Clone)]
 pub struct EventsPage {}
@@ -53,7 +28,44 @@ impl<'a> EventsPage {
         Self {}
     }
 
+    /// Get events and occurrences from the data_base.
+    ///
+    /// # Arguments
+    /// - conn - &Connection
+    ///
+    /// # Returns
+    /// - Result<Vec<EventOccurrence>>
+    fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
+        println!("Retrieving Records.");
+        // Get all events and occurrences.
+        let mut stmt = conn.prepare(
+            "\
+            SELECT name, date \
+            FROM events \
+            JOIN occurrences \
+            ON events.id = occurrences.event_id \
+            ORDER BY date DESC;",
+        )?;
+        let event_iter = stmt.query_map([], |row| {
+            Ok(EventOccurrence {
+                name: row.get(0)?,
+                date: row.get(1)?,
+            })
+        })?;
+        let mut events = Vec::new();
+        for event in event_iter {
+            events.push(event.unwrap());
+        }
+        Ok(events)
+    }
+
     /// Get the days since today for each occurrence for each event.
+    ///
+    /// # Arguments
+    /// - events - &[EventOccurrence]
+    ///
+    /// # Returns
+    /// - HashMap<String, Vec<i32>>
     pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
         let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
         for event in events.iter() {
@@ -73,6 +85,12 @@ impl<'a> EventsPage {
     }
 
     /// Get the elapsed days between each occurrence for each event.
+    ///
+    /// # Arguments
+    /// - days_since - &HashMap<String, Vec<i32>>
+    ///
+    /// # Returns
+    /// - HashMap<String, Vec<i32>>
     pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
         let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
         for item in days_since.iter() {
@@ -94,6 +112,12 @@ impl<'a> EventsPage {
     }
 
     /// Get the average elapsed days between occurrences for each event.
+    ///
+    /// # Arguments
+    /// - elapsed - HashMap<String, Vec<i32>>
+    ///
+    /// # Returns
+    /// - HashMap<String, Vec<i32>>
     pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
         let mut averages: HashMap<String, Vec<i32>> = HashMap::new();
         for item in elapsed.iter() {
@@ -113,11 +137,17 @@ impl<'a> EventsPage {
     }
 
     /// View the events page.
+    ///
+    /// # Arguments
+    /// - &self
+    ///
+    /// # Returns
+    /// - Element<'a, AppMessage>
     pub fn view(&self) -> Element<'a, AppMessage> {
-        // Open the database.
+        // Open the data_base.
         let conn = Connection::open("since_when.db").unwrap();
         // Get the events.
-        let events = get_events(&conn).unwrap();
+        let events = Self::get_events(&conn).unwrap();
         // Calculate the days since each event.
         let days_since_now = Self::get_days_since_now(&events);
         // Calculate the elapsed days between event occurrences.
@@ -128,7 +158,7 @@ impl<'a> EventsPage {
         let mut event_column = Column::new()
             .spacing(SPACING)
             .width(333)
-            .align_items(Alignment::End);
+            .align_items(Alignment::Center);
         let mut date_column = Column::new()
             .spacing(SPACING)
             .width(333)
@@ -140,33 +170,41 @@ impl<'a> EventsPage {
 
         // Create the column headers.
         let event_text = text("Events").size(TEXT_SIZE);
-        let date_text = text("Days Since").size(TEXT_SIZE);
-        let avg_text = text("Average Days").size(TEXT_SIZE);
+        let event_sep = text("_".repeat(36)).size(TEXT_SIZE / 4);
+        let date_text = text("Days  Since").size(TEXT_SIZE);
+        let date_sep = text("_".repeat(56)).size(TEXT_SIZE / 4);
+        let avg_text = text("Avg  Days").size(TEXT_SIZE);
+        let avg_sep = text("_".repeat(52)).size(TEXT_SIZE / 4);
         event_column = event_column.push(event_text);
+        event_column = event_column.push(event_sep);
         date_column = date_column.push(date_text);
+        date_column = date_column.push(date_sep);
         avg_column = avg_column.push(avg_text);
+        avg_column = avg_column.push(avg_sep);
 
         // Create the event rows.
         for days_since in days_since_now.iter() {
-            let mut plural = String::new();
             let days = days_since.1[0];
+            let mut plural = String::new();
             if days > 1 {
                 plural = String::from("s");
             }
             if averages.contains_key(&days_since.0.clone()) {
-                let average = averages.get(&days_since.0.clone()).unwrap()[0];
+                let average = match averages.get(&days_since.0.clone()) {
+                    Some(v) => v[0],
+                    None => 0,
+                };
                 let plural = if average > 1 { "s" } else { "" };
-                let average_text = format!("{} day{} avg", average, plural);
+                let average_text = format!("{} day{}", average, plural);
                 let average_text = Text::new(average_text).size(TEXT_SIZE);
                 avg_column = avg_column.push(average_text);
             } else {
-                let average_text = Text::new(format!("{} day{} avg", days, plural)).size(TEXT_SIZE);
+                let average_text = Text::new(format!("{} day{}", days, plural)).size(TEXT_SIZE);
                 avg_column = avg_column.push(average_text);
             }
             let event_button = Text::new(days_since.0.clone())
                 .size(TEXT_SIZE)
-                .horizontal_alignment(Horizontal::Left)
-                .style(iced::Color::from_rgb8(150, 0, 200));
+                .horizontal_alignment(Horizontal::Center);
             let days_text = format!("{} day{} ago", days, plural);
             let row_date = Text::new(days_text).size(TEXT_SIZE);
             event_column = event_column.push(event_button);
@@ -175,7 +213,8 @@ impl<'a> EventsPage {
         // Layout the buttons and text.
         let calendar_button = button(text("Add/Update Event").size(TEXT_SIZE))
             .padding(PADDING)
-            .on_press(AppMessage::CalendarWindow);
+            .on_press(AppMessage::CalendarWindow)
+            .style(iced::theme::Button::Secondary);
         let button_row = Row::new()
             .push(calendar_button)
             .align_items(Alignment::Center);
@@ -192,7 +231,7 @@ impl<'a> EventsPage {
             .push(button_row)
             .push(vertical_space(height))
             .align_items(Alignment::Center)
-            .spacing(SPACING);
+            .spacing(SPACING + 40);
         content.into()
     }
 }

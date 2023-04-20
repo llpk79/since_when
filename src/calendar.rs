@@ -12,6 +12,9 @@ const CAL_TEXT_SIZE: u16 = 50;
 const CAL_WIDTH: u16 = CAL_TEXT_SIZE + 20;
 
 /// Creates a new row.
+///
+/// # Returns
+/// - Row<'static, AppMessage, Renderer>
 pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
     Row::new()
         .spacing(SPACING)
@@ -26,10 +29,6 @@ pub struct Calendar {
 }
 
 /// Calendar window implementation.
-///
-/// 7 x 6 grid of day buttons.
-/// Buttons for moving to the next and previous month.
-/// Button for adding an event.
 impl<'a> Calendar {
     pub fn new() -> Calendar {
         // Get the current date for starting month.
@@ -40,6 +39,12 @@ impl<'a> Calendar {
     }
 
     /// Updates the Calendar State via messages.
+    ///
+    /// # Arguments
+    /// - message - AppMessage
+    ///
+    /// # Returns
+    /// - Command<AppMessage>
     pub fn update(&mut self, message: AppMessage) -> Command<AppMessage> {
         match message {
             AppMessage::PreviousMonth => {
@@ -70,18 +75,25 @@ impl<'a> Calendar {
     }
 
     /// Create the Calendar view.
+    ///
+    /// The Calendar is a 7 x 6 grid of day buttons.
+    /// Buttons for moving to the next and previous month.
+    /// Button for adding an event.
+    ///
+    /// # Returns
+    /// - Element<'a, AppMessage>
     pub fn view(self) -> Element<'a, AppMessage> {
         // Text to explain what to do.
-        let instructions = text("Click a day to add an event.").size(TEXT_SIZE);
+        let instructions = text("Click a day to add or update an event.").size(TEXT_SIZE);
         // Create a row for current month, prev and next month buttons.
         let instruction_row = row!(instructions)
             .spacing(SPACING)
             .align_items(Vertical::Top.into());
         let prev_button = button(text("<").size(TEXT_SIZE))
-            .style(theme::Button::Primary)
+            .style(theme::Button::Secondary)
             .on_press(AppMessage::PreviousMonth);
         let next_button = button(text(">").size(TEXT_SIZE))
-            .style(theme::Button::Primary)
+            .style(theme::Button::Secondary)
             .on_press(AppMessage::NextMonth);
 
         // Display the current month and year.
@@ -127,7 +139,7 @@ impl<'a> Calendar {
                         .size(CAL_TEXT_SIZE)
                         .horizontal_alignment(Horizontal::Center),
                 )
-                .style(theme::Button::Primary)
+                .style(theme::Button::Secondary)
                 .on_press(AppMessage::DayClicked(day, self.month, self.year))
                 .width(CAL_WIDTH),
             );
@@ -142,7 +154,7 @@ impl<'a> Calendar {
         // Add a button to go to the Events window.
         let events_button = button(text("Events").size(TEXT_SIZE))
             .on_press(AppMessage::EventsWindow)
-            .style(theme::Button::Primary);
+            .style(theme::Button::Secondary);
         let button_row = row![events_button];
         content = content.push(button_row);
         content.into()
