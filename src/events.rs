@@ -1,11 +1,10 @@
 use crate::AppMessage;
-use chrono::NaiveDate;
+use crate::database;
+use crate::utils;
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
 use iced::Element;
-use rusqlite::{Connection, Result};
-use std::collections::HashMap;
 
 const TEXT_SIZE: u16 = 50;
 const SPACING: u16 = 20;
@@ -14,8 +13,8 @@ const PADDING: u16 = 5;
 /// Event state.
 #[derive(Debug, Clone)]
 pub struct EventOccurrence {
-    name: String,
-    date: String,
+    pub name: String,
+    pub date: String,
 }
 
 /// Events page struct.
@@ -28,114 +27,6 @@ impl<'a> EventsPage {
         Self {}
     }
 
-    /// Get events and occurrences from the data_base.
-    ///
-    /// # Arguments
-    /// - conn - &Connection
-    ///
-    /// # Returns
-    /// - Result<Vec<EventOccurrence>>
-    fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
-        println!("Retrieving Records.");
-        // Get all events and occurrences.
-        let mut stmt = conn.prepare(
-            "\
-            SELECT name, date \
-            FROM events \
-            JOIN occurrences \
-            ON events.id = occurrences.event_id \
-            ORDER BY date DESC;",
-        )?;
-        let event_iter = stmt.query_map([], |row| {
-            Ok(EventOccurrence {
-                name: row.get(0)?,
-                date: row.get(1)?,
-            })
-        })?;
-        let mut events = Vec::new();
-        for event in event_iter {
-            events.push(event.unwrap());
-        }
-        Ok(events)
-    }
-
-    /// Get the days since today for each occurrence for each event.
-    ///
-    /// # Arguments
-    /// - events - &[EventOccurrence]
-    ///
-    /// # Returns
-    /// - HashMap<String, Vec<i32>>
-    pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
-        let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
-        for event in events.iter() {
-            // Calculate the days between the events and the current date.
-            let date = NaiveDate::parse_from_str(&event.date, "%Y-%m-%d").unwrap();
-            let now = chrono::Local::now().naive_local().date();
-            let days = now.signed_duration_since(date).num_days() as i32;
-            println!("event: {:?}, days {}", &event.name, days);
-            if days_since_now.contains_key(&event.name) {
-                let days_vec = days_since_now.get_mut(&event.name).unwrap();
-                days_vec.push(days);
-            } else {
-                days_since_now.insert(event.name.clone(), vec![days]);
-            };
-        }
-        days_since_now
-    }
-
-    /// Get the elapsed days between each occurrence for each event.
-    ///
-    /// # Arguments
-    /// - days_since - &HashMap<String, Vec<i32>>
-    ///
-    /// # Returns
-    /// - HashMap<String, Vec<i32>>
-    pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
-        let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
-        for item in days_since.iter() {
-            if item.1.len() > 1 {
-                for i in 1..item.1.len() {
-                    let days = item.1[i] - item.1[i - 1];
-                    if let std::collections::hash_map::Entry::Vacant(e) =
-                        elapsed.entry(item.0.clone())
-                    {
-                        e.insert(vec![days]);
-                    } else {
-                        let days_vec = elapsed.get_mut(&item.0.clone()).unwrap();
-                        days_vec.push(days);
-                    };
-                }
-            }
-        }
-        elapsed
-    }
-
-    /// Get the average elapsed days between occurrences for each event.
-    ///
-    /// # Arguments
-    /// - elapsed - HashMap<String, Vec<i32>>
-    ///
-    /// # Returns
-    /// - HashMap<String, Vec<i32>>
-    pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
-        let mut averages: HashMap<String, Vec<i32>> = HashMap::new();
-        for item in elapsed.iter() {
-            let mut sum = 0;
-            for i in item.1.iter() {
-                sum += i;
-            }
-            let average = sum / item.1.len() as i32;
-            if let std::collections::hash_map::Entry::Vacant(e) = averages.entry(item.0.clone()) {
-                e.insert(vec![average]);
-            } else {
-                let average_vec = averages.get_mut(&item.0.clone()).unwrap();
-                average_vec.push(average);
-            };
-        }
-        averages
-    }
-
     /// View the events page.
     ///
     /// # Arguments
@@ -145,15 +36,21 @@ impl<'a> EventsPage {
     /// - Element<'a, AppMessage>
     pub fn view(&self) -> Element<'a, AppMessage> {
         // Open the data_base.
-        let conn = Connection::open("since_when.db").unwrap();
+        let conn = database::setup_connection();
         // Get the events.
-        let events = Self::get_events(&conn).unwrap();
+        let events = match database::get_events(&conn) {
+            Ok(events) => events,
+            Err(e) => {
+                println!("Error: {}", e);
+                vec![]
+            }
+        };
         // Calculate the days since each event.
-        let days_since_now = Self::get_days_since_now(&events);
+        let days_since_now = utils::get_days_since_now(&events);
         // Calculate the elapsed days between event occurrences.
-        let elapsed = Self::get_elapsed_days(&days_since_now);
+        let elapsed = utils::get_elapsed_days(&days_since_now);
         // Calculate the average elapsed days between occurrences.
-        let averages = Self::get_averages(elapsed);
+        let averages = utils::get_averages(elapsed);
         // Create the columns.
         let mut event_column = Column::new()
             .spacing(SPACING)
