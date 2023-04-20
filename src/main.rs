@@ -1,5 +1,5 @@
 /*
-Written in rust, using iced for the gui, and rusqlite for the database.
+Written in rust, using iced for the gui, and rusqlite for the data_base.
 This app is to track the time since an Event has happened, expressed in days.
 For example, the time since you last changed your oil, or the time since you last had a haircut.
 The app is designed to be simple, and easy to use.
@@ -11,9 +11,9 @@ The app has three windows;
          - Arrow buttons allow the user to navigate between months.
      - Clicking a Calendar date opens a page for entering new events.
          - A text box allows the user to enter a new event.
-         - A button labeled "Add" allows the user to add the event to the database.
-         - Clicking the "Update" button adds an Occurrence of the event to the database.
-         - Clicking the "Delete" button removes the event from the database.
+         - A button labeled "Add" allows the user to add the event to the data_base.
+         - Clicking the "Update" button adds an Occurrence of the event to the data_base.
+         - Clicking the "Delete" button removes the event from the data_base.
      - The main page showing all events tracked by the app and elapsed time since the event.
          - A list of events tracked for the day is displayed.
          - Elapsed time in days since the last event and average time between events are
@@ -24,78 +24,12 @@ The app has three windows;
 mod add_event;
 mod calendar;
 mod events;
+mod database;
 use iced::theme::Theme;
 use iced::widget::{container, scrollable};
 use iced::{executor, Application, Command, Element, Length, Settings};
-use rusqlite::{params, Connection, Result};
 
-/// Setup rusqlite connection.
-pub fn setup_connection() -> Result<Connection, rusqlite::Error> {
-    let conn = Connection::open("since_when.db")?;
-    Ok(conn)
-}
 
-/// Setup the database tables.
-pub fn setup_tables(conn: &Connection) {
-    match conn.execute(
-        "CREATE TABLE IF NOT EXISTS events (
-                  id              INTEGER PRIMARY KEY,
-                  name            TEXT NOT NULL UNIQUE
-                  );",
-        params![],
-    ) {
-        Ok(created) => {
-            println!("Created table: {}", created);
-        }
-        Err(e) => {
-            println!("Error creating table: {}", e);
-        }
-    }
-    match conn.execute(
-        "CREATE TABLE IF NOT EXISTS occurrences (
-                  event_id        INTEGER,
-                  date            TEXT NOT NULL,
-                  FOREIGN KEY(event_id) REFERENCES events(id)
-                  );",
-        params![],
-    ) {
-        Ok(created) => {
-            println!("Created table: {}", created);
-        }
-        Err(e) => {
-            println!("Error creating table: {}", e);
-        }
-    }
-}
-
-pub fn insert_test_event(conn: &Connection) {
-    match conn.execute(
-        "INSERT INTO events (name) VALUES (?1), (?2);",
-        params!["Pooper empty", "Propane tank full"],
-    ) {
-        Ok(inserted) => {
-            println!("Record inserted: {}", inserted);
-            // Insert test occurrence.
-            match conn.execute(
-                "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
-                params![
-                    1i32,
-                    "2023-04-01".to_string(),
-                    2i32,
-                    "2023-04-12".to_string(),
-                    1i32,
-                    "2023-04-06".to_string(),
-                    1i32,
-                    "2023-04-11".to_string(),
-                ],
-            ) {
-                Ok(inserted) => println!("Record inserted: {}", inserted),
-                Err(e) => println!("Error inserting record: {}", e),
-            }
-        }
-        Err(e) => println!("Error inserting record: {}", e),
-    }
-}
 /// Application struct.
 struct SinceWhen {
     day: u32,
@@ -137,9 +71,15 @@ impl Application for SinceWhen {
     type Flags = ();
 
     /// Creates a new app.
+    ///
+    /// # Arguments
+    /// - flags: ()
+    ///
+    /// # Returns
+    /// - (Self, Command<AppMessage>)
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
-        let conn = setup_connection().unwrap();
-        setup_tables(&conn);
+        let conn = database::setup_connection().unwrap();
+        database::setup_tables(&conn);
         // insert_test_event(&conn);
         (
             Self {
@@ -156,15 +96,29 @@ impl Application for SinceWhen {
     }
 
     /// The title of the application.
+    ///
+    /// # Returns
+    /// - String
     fn title(&self) -> String {
         String::from("Since When?")
     }
 
+    /// The application theme.
+    ///
+    /// # Returns
+    /// - Self::Theme
+    fn theme(&self) -> Self::Theme {
+        Theme::Dark
+    }
+
     /// The update function.
     ///
-    /// This function is called when a message is received.
+    /// # Arguments
+    /// - message: AppMessage
+    ///
+    /// # Returns
+    /// - Command<AppMessage>
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        // println!("Message: {:?}", message);
         match message {
             AppMessage::NextMonth => {
                 let _ = self.calendar.update(AppMessage::NextMonth);
@@ -214,7 +168,8 @@ impl Application for SinceWhen {
 
     /// The view function.
     ///
-    /// This function is called when the application needs to be drawn.
+    /// # Returns
+    /// - Element<'static, Self::Message>
     fn view(&self) -> Element<'static, Self::Message> {
         let content = match self.current_page {
             Page::Calendar => self.calendar.view(),
