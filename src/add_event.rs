@@ -1,9 +1,8 @@
-use crate::{AppMessage, utils};
-use crate::database;
+use crate::{database, utils, AppMessage};
+use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
 use iced::{theme, Alignment, Command, Element};
-use chrono::NaiveDate;
 
 const TEXT_SIZE: u16 = 40;
 const SPACING: u16 = 20;
@@ -99,8 +98,8 @@ impl<'a> AddEvent {
                         println!("Occurrence added: {} on {}", &self.event, &self.date);
                     }
                     Err(e) => {
-                    println!("Error: {:?}", e);
-                    },
+                        println!("Error: {:?}", e);
+                    }
                 };
             }
             AppMessage::DeleteEvent => {
@@ -169,7 +168,7 @@ impl<'a> AddEvent {
         let add_button = button(
             text("Add Event")
                 .size(TEXT_SIZE)
-                .horizontal_alignment(Horizontal::Center)
+                .horizontal_alignment(Horizontal::Center),
         )
         .width(ADD_BUTTON_SIZE)
         .style(theme::Button::Secondary)

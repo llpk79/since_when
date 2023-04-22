@@ -1,6 +1,4 @@
-use crate::AppMessage;
-use crate::database;
-use crate::utils;
+use crate::{database, utils, AppMessage};
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;

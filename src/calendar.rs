@@ -1,10 +1,8 @@
-use crate::AppMessage;
-use crate::utils;
+use crate::{utils, AppMessage};
 use chrono::Datelike;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, row, text, Column, Row};
-use iced::{theme, Element};
-use iced::{Alignment, Command, Renderer};
+use iced::{theme, Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
 
 const TEXT_SIZE: u16 = 50;
