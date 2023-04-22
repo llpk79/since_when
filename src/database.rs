@@ -1,26 +1,26 @@
-use rusqlite::{Connection, Result, params};
 use crate::events::EventOccurrence;
+use rusqlite::{params, Connection, Result};
 
 /// Setup rusqlite connection.
 ///
 /// # Returns
 /// - Result<Connection, rusqlite::Error>
 pub fn setup_connection() -> Connection {
-match Connection::open("since_when.db") {
-    Ok(conn) => conn,
-    Err(e) => {
-        panic!("Error opening data_base {}", e);
+    match Connection::open("since_when.db") {
+        Ok(conn) => conn,
+        Err(e) => {
+            panic!("Error opening data_base {}", e);
+        }
     }
-}
 }
 
 pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statement<'a> {
-match conn.prepare(stmt) {
-    Ok(statement) => statement,
-    Err(e) => {
-        panic!("Error preparing statement: {}", e);
+    match conn.prepare(stmt) {
+        Ok(statement) => statement,
+        Err(e) => {
+            panic!("Error preparing statement: {}", e);
+        }
     }
-}
 }
 
 /// Setup the data_base tables.
@@ -31,35 +31,35 @@ match conn.prepare(stmt) {
 /// # Returns
 /// - ()
 pub fn setup_tables(conn: &Connection) {
-match conn.execute(
-    "CREATE TABLE IF NOT EXISTS events (
+    match conn.execute(
+        "CREATE TABLE IF NOT EXISTS events (
               id              INTEGER PRIMARY KEY,
               name            TEXT NOT NULL UNIQUE
               );",
-    params![],
-) {
-    Ok(_) => {
-        println!("Created table events.");
+        params![],
+    ) {
+        Ok(_) => {
+            println!("Created table events.");
+        }
+        Err(e) => {
+            println!("Error creating table: {}", e);
+        }
     }
-    Err(e) => {
-        println!("Error creating table: {}", e);
-    }
-}
-match conn.execute(
-    "CREATE TABLE IF NOT EXISTS occurrences (
+    match conn.execute(
+        "CREATE TABLE IF NOT EXISTS occurrences (
               event_id        INTEGER,
               date            TEXT NOT NULL,
               FOREIGN KEY(event_id) REFERENCES events(id)
               );",
-    params![],
-) {
-    Ok(_) => {
-        println!("Created table occurrences.");
+        params![],
+    ) {
+        Ok(_) => {
+            println!("Created table occurrences.");
+        }
+        Err(e) => {
+            println!("Error creating table: {}", e);
+        }
     }
-    Err(e) => {
-        println!("Error creating table: {}", e);
-    }
-}
 }
 
 /// Insert test data into the data_base.
@@ -70,14 +70,14 @@ match conn.execute(
 /// # Returns
 /// - ()
 pub fn insert_test_event(conn: &Connection) {
-match conn.execute(
-    "INSERT INTO events (name) VALUES (?1), (?2);",
-    params!["Pooper empty", "Propane tank full"],
-) {
-    Ok(inserted) => {
-        println!("Record inserted: {}", inserted);
-        // Insert test occurrence.
-        match conn.execute(
+    match conn.execute(
+        "INSERT INTO events (name) VALUES (?1), (?2);",
+        params!["Pooper empty", "Propane tank full"],
+    ) {
+        Ok(inserted) => {
+            println!("Record inserted: {}", inserted);
+            // Insert test occurrence.
+            match conn.execute(
             "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
             params![
                 1i32,
@@ -93,9 +93,9 @@ match conn.execute(
             Ok(inserted) => println!("Record inserted: {}", inserted),
             Err(e) => println!("Error inserting record: {}", e),
         }
+        }
+        Err(e) => println!("Error inserting record: {}", e),
     }
-    Err(e) => println!("Error inserting record: {}", e),
-}
 }
 
 /// Get events and occurrences from the data_base.
@@ -106,36 +106,36 @@ match conn.execute(
 /// # Returns
 /// - Result<Vec<EventOccurrence>>
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
-println!("Retrieving Records.");
-// Get all events and occurrences.
-let mut stmt = conn.prepare(
-    "\
+    println!("Retrieving Records.");
+    // Get all events and occurrences.
+    let mut stmt = conn.prepare(
+        "\
     SELECT name, date \
     FROM events \
     JOIN occurrences \
     ON events.id = occurrences.event_id \
     ORDER BY date DESC;",
-)?;
-let event_iter = stmt.query_map([], |row| {
-    Ok(EventOccurrence {
-        name: row.get(0)?,
-        date: row.get(1)?,
-    })
-})?;
-let mut events = Vec::new();
-for event in event_iter {
-    events.push(match event {
-        Ok(event) => event,
-        Err(e) => {
-            println!("Error retrieving record: {}", e);
-            EventOccurrence {
-                name: "".to_string(),
-                date: "".to_string(),
+    )?;
+    let event_iter = stmt.query_map([], |row| {
+        Ok(EventOccurrence {
+            name: row.get(0)?,
+            date: row.get(1)?,
+        })
+    })?;
+    let mut events = Vec::new();
+    for event in event_iter {
+        events.push(match event {
+            Ok(event) => event,
+            Err(e) => {
+                println!("Error retrieving record: {}", e);
+                EventOccurrence {
+                    name: "".to_string(),
+                    date: "".to_string(),
+                }
             }
-        }
-    });
-}
-Ok(events)
+        });
+    }
+    Ok(events)
 }
 
 /// Perform a SQL insert with variable parameters.
@@ -202,14 +202,12 @@ pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     }
     println!("Getting event id for {:?}", event);
     let mut id_stmt = prepare_stmt(conn, "SELECT id FROM events WHERE name = ?1;");
-    let ID { id } =
-        match id_stmt.query_row(params![event], |row| Ok(ID { id: row.get(0)? })) {
-            Ok(id) => id,
-            Err(e) => {
-                println!("Error: {:?}", e);
-                ID { id: 0 }
-            }
-        };
+    let ID { id } = match id_stmt.query_row(params![event], |row| Ok(ID { id: row.get(0)? })) {
+        Ok(id) => id,
+        Err(e) => {
+            println!("Error: {:?}", e);
+            ID { id: 0 }
+        }
+    };
     id
 }
-

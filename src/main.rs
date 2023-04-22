@@ -21,17 +21,14 @@ The app has three windows;
          - A button labeled Calendar is displayed at the bottom of the page.
 */
 
-extern crate core;
-
 mod add_event;
 mod calendar;
-mod events;
 mod database;
+mod events;
 mod utils;
 use iced::theme::Theme;
 use iced::widget::{container, scrollable};
 use iced::{executor, Application, Command, Element, Length, Settings};
-
 
 /// Application struct.
 struct SinceWhen {
@@ -83,7 +80,7 @@ impl Application for SinceWhen {
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
         let conn = database::setup_connection();
         database::setup_tables(&conn);
-        // insert_test_event(&conn);
+        // database::insert_test_event(&conn);
         (
             Self {
                 day: 0,
@@ -135,17 +132,15 @@ impl Application for SinceWhen {
                     self.add_event
                         .update(AppMessage::UpdateEvent, self.day, self.month, self.year);
             }
-            AppMessage::CalendarWindow => {
-                self.current_page = Page::Calendar;
-            }
-            AppMessage::EventsWindow => {
-                self.current_page = Page::Events;
-            }
             AppMessage::AddEvent => {
-                self.current_page = Page::AddEvent;
                 let _ =
                     self.add_event
                         .update(AppMessage::AddEvent, self.day, self.month, self.year);
+            }
+            AppMessage::DeleteEvent => {
+                let _ =
+                    self.add_event
+                        .update(AppMessage::DeleteEvent, self.day, self.month, self.year);
             }
             AppMessage::TextEvent(event) => {
                 let _ = self.add_event.update(
@@ -155,10 +150,11 @@ impl Application for SinceWhen {
                     self.year,
                 );
             }
-            AppMessage::DeleteEvent => {
-                let _ =
-                    self.add_event
-                        .update(AppMessage::DeleteEvent, self.day, self.month, self.year);
+            AppMessage::CalendarWindow => {
+                self.current_page = Page::Calendar;
+            }
+            AppMessage::EventsWindow => {
+                self.current_page = Page::Events;
             }
         }
         Command::none()

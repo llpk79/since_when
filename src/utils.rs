@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use chrono::NaiveDate;
 use crate::events::EventOccurrence;
+use chrono::NaiveDate;
+use std::collections::HashMap;
 
 /// Get the date from the day, month, and year.
 ///
@@ -65,16 +65,15 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// - HashMap<String, Vec<i32>>
 pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
     let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
-    for item in days_since.iter() {
-        if item.1.len() > 1 {
-            for i in 1..item.1.len() {
-                let days = item.1[i] - item.1[i - 1];
-                if let std::collections::hash_map::Entry::Vacant(e) =
-                    elapsed.entry(item.0.clone())
+    for items in days_since.iter() {
+        if items.1.len() > 1 {
+            for item in 1..items.1.len() {
+                let days = items.1[item] - items.1[item - 1];
+                if let std::collections::hash_map::Entry::Vacant(e) = elapsed.entry(items.0.clone())
                 {
                     e.insert(vec![days]);
                 } else {
-                    let days_vec = match elapsed.get_mut(&item.0.clone()) {
+                    let days_vec = match elapsed.get_mut(&items.0.clone()) {
                         Some(days_vec) => days_vec,
                         None => {
                             println!("Error getting days vector");
