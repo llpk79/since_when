@@ -85,11 +85,8 @@ impl<'a> EventsPage {
                 plural = String::from("s");
             }
             if averages.contains_key(&days_since.0.clone()) {
-                let average = match averages.get(&days_since.0.clone()) {
-                    Some(v) => v[0],
-                    None => 0,
-                };
-                let plural = if average > 1 { "s" } else { "" };
+                let average = averages.get(&days_since.0.clone()).unwrap_or(&0);
+                let plural = if average > &1 { "s" } else { "" };
                 let average_text = format!("{} day{}", average, plural);
                 let average_text = Text::new(average_text).size(TEXT_SIZE);
                 avg_column = avg_column.push(average_text);
