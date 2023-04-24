@@ -1,4 +1,5 @@
-use crate::{database, utils, AppMessage};
+use crate::app::AppMessage;
+use crate::{database, utils};
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
@@ -13,6 +14,12 @@ const ADD_BUTTON_SIZE: u16 = 225;
 pub struct AddEvent {
     date: NaiveDate,
     event: String,
+}
+
+impl Default for AddEvent {
+    fn default() -> Self {
+        AddEvent::new()
+    }
 }
 
 /// AddEvent implementation.

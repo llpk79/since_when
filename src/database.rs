@@ -4,7 +4,7 @@ use rusqlite::{params, Connection, Result};
 /// Setup rusqlite connection.
 ///
 /// # Returns
-/// - Result<Connection, rusqlite::Error>
+/// - rusqlite::Connection
 pub fn setup_connection() -> Connection {
     match Connection::open("since_when.db") {
         Ok(conn) => conn,
@@ -14,6 +14,14 @@ pub fn setup_connection() -> Connection {
     }
 }
 
+/// Prepare a SQL statement.
+///
+/// # Arguments
+/// - conn: &Connection
+/// - stmt: &str
+///
+/// # Returns
+/// - rusqlite::Statement
 pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statement<'a> {
     match conn.prepare(stmt) {
         Ok(statement) => statement,
@@ -108,14 +116,15 @@ pub fn insert_test_event(conn: &Connection) {
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     println!("Retrieving Records.");
     // Get all events and occurrences.
-    let mut stmt = conn.prepare(
+    let mut stmt = prepare_stmt(
+        conn,
         "\
     SELECT name, date \
     FROM events \
     JOIN occurrences \
     ON events.id = occurrences.event_id \
     ORDER BY date DESC;",
-    )?;
+    );
     let event_iter = stmt.query_map([], |row| {
         Ok(EventOccurrence {
             name: row.get(0)?,

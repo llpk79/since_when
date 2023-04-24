@@ -1,4 +1,6 @@
-use crate::{database, utils, AppMessage};
+use crate::app::AppMessage;
+use crate::database;
+use crate::utils;
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
@@ -64,43 +66,41 @@ impl<'a> EventsPage {
             .align_items(Alignment::Center);
 
         // Create the column headers.
-        let event_text = text("Events").size(TEXT_SIZE);
+        let event_header = text("Events").size(TEXT_SIZE);
         let event_sep = text("_".repeat(36)).size(TEXT_SIZE / 4);
-        let date_text = text("Days  Since").size(TEXT_SIZE);
+        let date_header = text("Days  Since").size(TEXT_SIZE);
         let date_sep = text("_".repeat(56)).size(TEXT_SIZE / 4);
-        let avg_text = text("Avg  Days").size(TEXT_SIZE);
+        let avg_header = text("Avg  Days").size(TEXT_SIZE);
         let avg_sep = text("_".repeat(52)).size(TEXT_SIZE / 4);
-        event_column = event_column.push(event_text);
+        event_column = event_column.push(event_header);
         event_column = event_column.push(event_sep);
-        date_column = date_column.push(date_text);
+        date_column = date_column.push(date_header);
         date_column = date_column.push(date_sep);
-        avg_column = avg_column.push(avg_text);
+        avg_column = avg_column.push(avg_header);
         avg_column = avg_column.push(avg_sep);
 
         // Create the event rows.
         for days_since in days_since_now.iter() {
             let days = days_since.1[0];
             let mut plural = String::new();
-            if days > 1 {
+            if days != 1 {
                 plural = String::from("s");
             }
             if averages.contains_key(&days_since.0.clone()) {
                 let average = averages.get(&days_since.0.clone()).unwrap_or(&0);
                 let plural = if average > &1 { "s" } else { "" };
-                let average_text = format!("{} day{}", average, plural);
-                let average_text = Text::new(average_text).size(TEXT_SIZE);
+                let average_text = Text::new(format!("{} day{}", average, plural)).size(TEXT_SIZE);
                 avg_column = avg_column.push(average_text);
             } else {
-                let average_text = Text::new(format!("{} day{}", days, plural)).size(TEXT_SIZE);
+                let average_text = Text::new("---").size(TEXT_SIZE);
                 avg_column = avg_column.push(average_text);
             }
-            let event_button = Text::new(days_since.0.clone())
+            let event_text = Text::new(days_since.0.clone())
                 .size(TEXT_SIZE)
                 .horizontal_alignment(Horizontal::Center);
-            let days_text = format!("{} day{} ago", days, plural);
-            let row_date = Text::new(days_text).size(TEXT_SIZE);
-            event_column = event_column.push(event_button);
-            date_column = date_column.push(row_date);
+            let date_text = Text::new(format!("{} day{} ago", days, plural)).size(TEXT_SIZE);
+            event_column = event_column.push(event_text);
+            date_column = date_column.push(date_text);
         }
         // Layout the buttons and text.
         let calendar_button = button(text("Add/Update Event").size(TEXT_SIZE))

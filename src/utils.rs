@@ -29,6 +29,7 @@ pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
 /// - HashMap<String, Vec<i32>>
 pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
     let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
+    let now = chrono::Local::now().naive_local().date();
     for event in events.iter() {
         // Calculate the days between the events and the current date.
         let date = match NaiveDate::parse_from_str(&event.date, "%Y-%m-%d") {
@@ -38,7 +39,6 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
                 continue;
             }
         };
-        let now = chrono::Local::now().naive_local().date();
         let days = now.signed_duration_since(date).num_days() as i32;
         if days_since_now.contains_key(&event.name) {
             let days_vec = match days_since_now.get_mut(&event.name) {
@@ -67,30 +67,31 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// ### Example
 /// ```
 /// # use std::collections::HashMap;
-/// let times = vec![1, 11, 22, 33, 44];
-/// let mut days_since: HashMap<String, Vec<i32>> = HashMap::new();
-/// days_since.insert("event".to_string(), times);
-/// let expected_vec = vec![10, 11, 11, 11];
-/// let expected = HashMap::new();
-/// expected.insert("event".to_string(), expected_vec);
+/// # use since_when_lib::utils::get_elapsed_days;
+/// let mut days_since = HashMap::new();
+/// let times_0 = vec![1, 11, 22, 33, 44];
+/// let times_1 = vec![1, 6, 8, 16, 20];
+/// days_since.insert("event_0".to_string(), times_0);
+/// days_since.insert("event_1".to_string(), times_1);
+///
+/// let mut expected = HashMap::new();
+/// let expected_vec_0 = vec![10, 11, 11, 11];
+/// let expected_vec_1 = vec![5, 2, 8, 4];
+/// expected.insert("event_0".to_string(), expected_vec_0);
+/// expected.insert("event_1".to_string(), expected_vec_1);
+///
 /// assert_eq!(get_elapsed_days(&days_since), expected);
 /// ```
 pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
     let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
-    let mut days_vec: Vec<i32> = Vec::new();
     for items in days_since.iter() {
+        let mut days_vec: Vec<i32> = Vec::new();
         if items.1.len() > 1 {
             for item in 1..items.1.len() {
                 let days = items.1[item] - items.1[item - 1];
-                days_vec = match elapsed.get_mut(&items.0.clone()) {
-                    Some(days_vec) => days_vec.clone(),
-                    None => {
-                        vec![days]
-                    }
-                };
                 days_vec.push(days);
             }
-            elapsed.entry(items.0.clone()).or_insert(days_vec.clone());
+            elapsed.entry(items.0.clone()).or_insert(days_vec);
         }
     }
     elapsed
@@ -107,19 +108,23 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// ### Example
 /// ```
 /// # use std::collections::HashMap;
-/// let times = vec![1, 11, 22, 33, 44];
-/// let map = HashMap::new();
-/// map.entry("foo").or_insert(times);
-/// assert_ep!(get_averages(map), 11);
+/// # use since_when_lib::utils::get_averages;
+/// let mut averages = HashMap::new();
+/// let times_0 = vec![1, 11, 22, 33, 44];
+/// let times_1 = vec![1, 6, 11, 16, 21];
+/// averages.entry("foo".to_string()).or_insert(times_0);
+/// averages.entry("bar".to_string()).or_insert(times_1);
+///
+/// let mut expected = HashMap::new();
+/// expected.entry("foo".to_string()).or_insert(22);
+/// expected.entry("bar".to_string()).or_insert(11);
+///
+/// assert_eq!(get_averages(averages), expected);
 /// ```
 pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
     let mut averages: HashMap<String, i32> = HashMap::new();
     for item in elapsed.iter() {
-        let mut sum = 0;
-        for num_days in item.1.iter() {
-            sum += num_days;
-        }
-        let average = sum / item.1.len() as i32;
+        let average = item.1.iter().sum::<i32>() / item.1.len() as i32;
         averages.entry(item.0.to_string()).or_insert(average);
     }
     averages
