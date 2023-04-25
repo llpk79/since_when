@@ -49,10 +49,10 @@ impl Application for SinceWhen {
     /// Creates a new app.
     ///
     /// # Arguments
-    /// - flags: ()
+    /// - flags: `()`
     ///
     /// # Returns
-    /// - (Self, Command<AppMessage>)
+    /// - `(Self, Command<AppMessage>)`
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
         let conn = database::setup_connection();
         database::setup_tables(&conn);
@@ -82,10 +82,10 @@ impl Application for SinceWhen {
     /// The update function.
     ///
     /// # Arguments
-    /// - message: AppMessage
+    /// - message: `AppMessage`
     ///
     /// # Returns
-    /// - Command<AppMessage>
+    /// - `Command<AppMessage>`
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
             AppMessage::NextMonth => {
@@ -139,7 +139,7 @@ impl Application for SinceWhen {
     /// The view function.
     ///
     /// # Returns
-    /// - Element<'static, Self::Message>
+    /// - `Element<'static, Self::Message>`
     fn view(&self) -> Element<'static, Self::Message> {
         let content = match self.current_page {
             Page::Calendar => self.calendar.view(),
@@ -157,7 +157,7 @@ impl Application for SinceWhen {
     /// The application theme.
     ///
     /// # Returns
-    /// - Self::Theme
+    /// - `Self::Theme`
     fn theme(&self) -> Self::Theme {
         Theme::Dark
     }

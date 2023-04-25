@@ -23,10 +23,10 @@ pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
 /// Get the days since today for each occurrence for each event.
 ///
 /// # Arguments
-/// - events - &[EventOccurrence]
+/// - events - `&[EventOccurrence]`
 ///
 /// # Returns
-/// - HashMap<String, Vec<i32>>
+/// - `HashMap<String, Vec<i32>>`
 pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
     let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
     let now = chrono::Local::now().naive_local().date();
@@ -59,10 +59,10 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// Get the elapsed days between each occurrence for each event.
 ///
 /// ### Arguments
-/// - days_since - &HashMap<String, Vec<i32>>
+/// - days_since - `&HashMap<String, Vec<i32>>`
 ///
 /// ### Returns
-/// - HashMap<String, Vec<i32>>
+/// - `HashMap<String, Vec<i32>>`
 ///
 /// ### Example
 /// ```
@@ -100,10 +100,10 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// Get the average elapsed days between occurrences for each event.
 ///
 /// ### Arguments
-/// elapsed - HashMap<String, Vec<i32>>
+/// elapsed - `HashMap<String, Vec<i32>>`
 ///
 /// ### Returns
-/// HashMap<String, i32>
+/// `HashMap<String, i32>`
 ///
 /// ### Example
 /// ```

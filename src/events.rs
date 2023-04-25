@@ -30,10 +30,10 @@ impl<'a> EventsPage {
     /// View the events page.
     ///
     /// # Arguments
-    /// - &self
+    /// - `&self`
     ///
     /// # Returns
-    /// - Element<'a, AppMessage>
+    /// - `Element<'a, AppMessage>`
     pub fn view(&self) -> Element<'a, AppMessage> {
         // Open the data_base.
         let conn = database::setup_connection();

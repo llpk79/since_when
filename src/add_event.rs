@@ -16,6 +16,7 @@ pub struct AddEvent {
     event: String,
 }
 
+/// Default AddEvent implementation.
 impl Default for AddEvent {
     fn default() -> Self {
         AddEvent::new()
@@ -39,13 +40,13 @@ impl<'a> AddEvent {
     /// Update the state of the AddEvent page.
     ///
     /// # Arguments
-    /// - message: AppMessage - The message to process.
-    /// - day: u32 - The day of the date to add.
-    /// - month: u32 - The month of the date to add.
-    /// - year: i32 - The year of the date to add.
+    /// - message: `AppMessage` - The message to process.
+    /// - day: `u32` - The day of the date to add.
+    /// - month: `u32` - The month of the date to add.
+    /// - year: `i32` - The year of the date to add.
     ///
     /// # Returns
-    /// - Command<AppMessage> - The command to execute.
+    /// - `Command<AppMessage>` - The command to execute.
     pub fn update(
         &mut self,
         message: AppMessage,
@@ -156,12 +157,12 @@ impl<'a> AddEvent {
     /// View for AddEvent.
     ///
     /// # Arguments
-    /// - day: u32 - The day of the date to display.
-    /// - month: u32 - The month of the date to display.
-    /// - year: i32 - The year of the date to display.
+    /// - day: `u32` - The day of the date to display.
+    /// - month: `u32` - The month of the date to display.
+    /// - year: `i32` - The year of the date to display.
     ///
     /// # Returns
-    /// - Element<'a, AppMessage> - The view.
+    /// - `Element<'a, AppMessage>` - The view.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
         let date = utils::get_date(year, month, day);
         let date_text = text(date.format("%A, %B %e, %Y").to_string())

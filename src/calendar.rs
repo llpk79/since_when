@@ -14,7 +14,7 @@ const CAL_WIDTH: u16 = CAL_TEXT_SIZE + 20;
 /// Creates a new row.
 ///
 /// # Returns
-/// - Row<'static, AppMessage, Renderer>
+/// - `Row<'static, AppMessage, Renderer>`
 pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
     Row::new()
         .spacing(SPACING)
@@ -41,10 +41,10 @@ impl<'a> Calendar {
     /// Updates the Calendar State via messages.
     ///
     /// # Arguments
-    /// - message - AppMessage
+    /// - message - `AppMessage`
     ///
     /// # Returns
-    /// - Command<AppMessage>
+    /// - `Command<AppMessage>`
     pub fn update(&mut self, message: AppMessage) -> Command<AppMessage> {
         match message {
             AppMessage::PreviousMonth => {
@@ -81,7 +81,7 @@ impl<'a> Calendar {
     /// Button for adding an event.
     ///
     /// # Returns
-    /// - Element<'a, AppMessage>
+    /// - `Element<'a, AppMessage>`
     pub fn view(self) -> Element<'a, AppMessage> {
         // Text to explain what to do.
         let instructions = text("Click a day to add or update an event.").size(TEXT_SIZE);

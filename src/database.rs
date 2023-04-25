@@ -4,7 +4,7 @@ use rusqlite::{params, Connection, Result};
 /// Setup rusqlite connection.
 ///
 /// # Returns
-/// - rusqlite::Connection
+/// - `rusqlite::Connection`
 pub fn setup_connection() -> Connection {
     match Connection::open("since_when.db") {
         Ok(conn) => conn,
@@ -17,11 +17,11 @@ pub fn setup_connection() -> Connection {
 /// Prepare a SQL statement.
 ///
 /// # Arguments
-/// - conn: &Connection
-/// - stmt: &str
+/// - conn: `&Connection`
+/// - stmt: `&str`
 ///
 /// # Returns
-/// - rusqlite::Statement
+/// - `rusqlite::Statement`
 pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statement<'a> {
     match conn.prepare(stmt) {
         Ok(statement) => statement,
@@ -34,10 +34,10 @@ pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statem
 /// Setup the data_base tables.
 ///
 /// # Arguments
-/// - &Connection
+/// - `&Connection`
 ///
 /// # Returns
-/// - ()
+/// - `()`
 pub fn setup_tables(conn: &Connection) {
     match conn.execute(
         "CREATE TABLE IF NOT EXISTS events (
@@ -73,10 +73,10 @@ pub fn setup_tables(conn: &Connection) {
 /// Insert test data into the data_base.
 ///
 /// # Arguments
-/// - &Connection
+/// - `&Connection`
 ///
 /// # Returns
-/// - ()
+/// - `()`
 pub fn insert_test_event(conn: &Connection) {
     match conn.execute(
         "INSERT INTO events (name) VALUES (?1), (?2);",
@@ -109,10 +109,10 @@ pub fn insert_test_event(conn: &Connection) {
 /// Get events and occurrences from the data_base.
 ///
 /// # Arguments
-/// - conn - &Connection
+/// - conn - `&Connection`
 ///
 /// # Returns
-/// - Result<Vec<EventOccurrence>>
+/// - `Result<Vec<EventOccurrence>>`
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     println!("Retrieving Records.");
     // Get all events and occurrences.
@@ -150,15 +150,15 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
 /// Perform a SQL insert with variable parameters.
 ///
 /// # Arguments
-/// - conn: &rusqlite::Connection - The data_base connection.
-/// - id: (i32, bool) - The id of the event to insert.
-/// - date: (&str, bool) - The date of the occurrence to insert.
-/// - event: (&str, bool) - The name of the event to insert.
+/// - conn: `&rusqlite::Connection` - The data_base connection.
+/// - id: `(i32, bool)` - The id of the event to insert.
+/// - date: `(&str, bool)` - The date of the occurrence to insert.
+/// - event: `(&str, bool)` - The name of the event to insert.
 ///     - The bool portion of the tuple is a flag to determine if the parameter should be used.
-/// - sql: &str - The SQL statement to execute.
+/// - sql: `&str` - The SQL statement to execute.
 ///
 /// # Returns
-/// - Result<i32, rusqlite::Error> - bool success flag.
+/// - `Result<i32, rusqlite::Error>` - bool success flag.
 pub fn sql_insert(
     conn: &Connection,
     id: (i32, bool),
@@ -201,10 +201,10 @@ pub fn sql_insert(
 /// Get the id of the event.
 ///
 /// # Arguments
-/// - conn: &rusqlite::Connection - The data_base connection.
+/// - conn: `&rusqlite::Connection` - The data_base connection.
 ///
 /// # Returns
-/// - i32 - The id of the event.
+/// - id: `i32` - The id of the event.
 pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     struct ID {
         id: i32,
