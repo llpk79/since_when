@@ -4,3 +4,4 @@ pub mod calendar;
 pub mod database;
 pub mod events;
 pub mod utils;
+extern crate log;

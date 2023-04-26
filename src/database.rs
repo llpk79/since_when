@@ -1,5 +1,6 @@
 use crate::events::EventOccurrence;
 use rusqlite::{params, Connection, Result};
+use log::{info, error};
 
 /// Setup rusqlite connection.
 ///
@@ -47,10 +48,10 @@ pub fn setup_tables(conn: &Connection) {
         params![],
     ) {
         Ok(_) => {
-            println!("Created table events.");
+            info!("Created table events.");
         }
         Err(e) => {
-            println!("Error creating table: {}", e);
+            error!("Error creating table: {}", e);
         }
     }
     match conn.execute(
@@ -62,10 +63,10 @@ pub fn setup_tables(conn: &Connection) {
         params![],
     ) {
         Ok(_) => {
-            println!("Created table occurrences.");
+            info!("Created table occurrences.");
         }
         Err(e) => {
-            println!("Error creating table: {}", e);
+            error!("Error creating table: {}", e);
         }
     }
 }
@@ -83,7 +84,7 @@ pub fn insert_test_event(conn: &Connection) {
         params!["Pooper empty", "Propane tank full"],
     ) {
         Ok(inserted) => {
-            println!("Record inserted: {}", inserted);
+            info!("Record inserted: {}", inserted);
             // Insert test occurrence.
             match conn.execute(
             "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
@@ -98,11 +99,11 @@ pub fn insert_test_event(conn: &Connection) {
                 "2023-04-11".to_string(),
             ],
         ) {
-            Ok(inserted) => println!("Record inserted: {}", inserted),
-            Err(e) => println!("Error inserting record: {}", e),
+            Ok(inserted) => info!("Record inserted: {}", inserted),
+            Err(e) => error!("Error inserting record: {}", e),
         }
         }
-        Err(e) => println!("Error inserting record: {}", e),
+        Err(e) => error!("Error inserting record: {}", e),
     }
 }
 
@@ -114,7 +115,7 @@ pub fn insert_test_event(conn: &Connection) {
 /// # Returns
 /// - `Result<Vec<EventOccurrence>>`
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
-    println!("Retrieving Records.");
+    info!("Retrieving Records.");
     // Get all events and occurrences.
     let mut stmt = prepare_stmt(
         conn,
@@ -136,7 +137,7 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
         events.push(match event {
             Ok(event) => event,
             Err(e) => {
-                println!("Error retrieving record: {}", e);
+                error!("Error retrieving record: {}", e);
                 EventOccurrence {
                     name: "".to_string(),
                     date: "".to_string(),
@@ -149,7 +150,7 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
 
 /// Perform a SQL insert with variable parameters.
 ///
-/// # Arguments
+/// ### Arguments
 /// - conn: `&rusqlite::Connection` - The data_base connection.
 /// - id: `(i32, bool)` - The id of the event to insert.
 /// - date: `(&str, bool)` - The date of the occurrence to insert.
@@ -157,7 +158,7 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
 ///     - The bool portion of the tuple is a flag to determine if the parameter should be used.
 /// - sql: `&str` - The SQL statement to execute.
 ///
-/// # Returns
+/// ### Returns
 /// - `Result<i32, rusqlite::Error>` - bool success flag.
 pub fn sql_insert(
     conn: &Connection,
@@ -169,27 +170,27 @@ pub fn sql_insert(
     let mut stmt = prepare_stmt(conn, sql);
     // Match on the flags to determine which parameters to use.
     match (id.1, date.1, event.1) {
-        // Add occurrence.
+        // Update event with a new occurrence.
         (true, true, false) => match stmt.execute(params![id.0, date.0]) {
             Ok(success) => success,
             Err(e) => {
-                println!("Error: {:?}", e);
+                error!("Error: {:?}", e);
                 0
             }
         },
-        // Add event.
+        // Add event/delete occurrence.
         (false, false, true) => match stmt.execute(params![event.0]) {
             Ok(success) => success,
             Err(e) => {
-                println!("Error: {:?}", e);
+                error!("Error: {:?}", e);
                 0
             }
         },
-        // Update or delete event.
+        // Delete event.
         (true, false, false) => match stmt.execute(params![id.0]) {
             Ok(success) => success,
             Err(e) => {
-                println!("Error: {:?}", e);
+                error!("Error: {:?}", e);
                 0
             }
         },
@@ -209,12 +210,12 @@ pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     struct ID {
         id: i32,
     }
-    println!("Getting event id for {:?}", event);
+    info!("Getting event id for {:?}", event);
     let mut id_stmt = prepare_stmt(conn, "SELECT id FROM events WHERE name = ?1;");
     let ID { id } = match id_stmt.query_row(params![event], |row| Ok(ID { id: row.get(0)? })) {
         Ok(id) => id,
         Err(e) => {
-            println!("Error: {:?}", e);
+            error!("Error: {:?}", e);
             ID { id: 0 }
         }
     };

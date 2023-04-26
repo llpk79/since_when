@@ -5,6 +5,7 @@ use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
 use iced::Element;
+use log::{error};
 
 const TEXT_SIZE: u16 = 50;
 const SPACING: u16 = 20;
@@ -41,7 +42,7 @@ impl<'a> EventsPage {
         let events = match database::get_events(&conn) {
             Ok(events) => events,
             Err(e) => {
-                println!("Error: {}", e);
+                error!("Error: {}", e);
                 vec![]
             }
         };

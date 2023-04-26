@@ -1,6 +1,7 @@
 use crate::events::EventOccurrence;
 use chrono::NaiveDate;
 use std::collections::HashMap;
+use log::error;
 
 /// Get the date from the day, month, and year.
 ///
@@ -35,7 +36,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
         let date = match NaiveDate::parse_from_str(&event.date, "%Y-%m-%d") {
             Ok(date) => date,
             Err(_) => {
-                println!("Error parsing date");
+                error!("Error parsing date");
                 continue;
             }
         };
@@ -44,7 +45,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
             let days_vec = match days_since_now.get_mut(&event.name) {
                 Some(days_vec) => days_vec,
                 None => {
-                    println!("Error getting days vector");
+                    error!("Error getting days vector");
                     continue;
                 }
             };
