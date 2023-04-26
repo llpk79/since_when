@@ -1,6 +1,7 @@
 use crate::events::EventOccurrence;
 use chrono::NaiveDate;
 use std::collections::HashMap;
+use log::error;
 
 /// Get the date from the day, month, and year.
 ///
@@ -23,10 +24,10 @@ pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
 /// Get the days since today for each occurrence for each event.
 ///
 /// # Arguments
-/// - events - &[EventOccurrence]
+/// - events - `&[EventOccurrence]`
 ///
 /// # Returns
-/// - HashMap<String, Vec<i32>>
+/// - `HashMap<String, Vec<i32>>`
 pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
     let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
     let now = chrono::Local::now().naive_local().date();
@@ -35,7 +36,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
         let date = match NaiveDate::parse_from_str(&event.date, "%Y-%m-%d") {
             Ok(date) => date,
             Err(_) => {
-                println!("Error parsing date");
+                error!("Error parsing date");
                 continue;
             }
         };
@@ -44,7 +45,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
             let days_vec = match days_since_now.get_mut(&event.name) {
                 Some(days_vec) => days_vec,
                 None => {
-                    println!("Error getting days vector");
+                    error!("Error getting days vector");
                     continue;
                 }
             };
@@ -59,10 +60,10 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// Get the elapsed days between each occurrence for each event.
 ///
 /// ### Arguments
-/// - days_since - &HashMap<String, Vec<i32>>
+/// - days_since - `&HashMap<String, Vec<i32>>`
 ///
 /// ### Returns
-/// - HashMap<String, Vec<i32>>
+/// - `HashMap<String, Vec<i32>>`
 ///
 /// ### Example
 /// ```
@@ -100,10 +101,10 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// Get the average elapsed days between occurrences for each event.
 ///
 /// ### Arguments
-/// elapsed - HashMap<String, Vec<i32>>
+/// elapsed - `HashMap<String, Vec<i32>>`
 ///
 /// ### Returns
-/// HashMap<String, i32>
+/// `HashMap<String, i32>`
 ///
 /// ### Example
 /// ```
