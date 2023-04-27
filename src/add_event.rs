@@ -1,14 +1,11 @@
 use crate::app::AppMessage;
 use crate::{database, utils};
+use crate::settings::Settings;
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
 use iced::{theme, Alignment, Command, Element};
 use log::{info, error};
-
-const TEXT_SIZE: u16 = 40;
-const SPACING: u16 = 20;
-const ADD_BUTTON_SIZE: u16 = 225;
 
 /// AddEvent state.
 #[derive(Debug, Clone)]
@@ -61,6 +58,9 @@ impl<'a> AddEvent {
             AppMessage::AddEvent => {
                 info!("Adding Event {:?} on {:?}", &self.event, &self.date);
                 // Add the event to the data_base.
+                if self.event.is_empty() {
+                    return Command::none();
+                }
                 match database::sql_insert(
                     &conn,
                     (0, false),
@@ -165,37 +165,38 @@ impl<'a> AddEvent {
     /// # Returns
     /// - `Element<'a, AppMessage>` - The view.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
+        let settings = Settings::new();
         let date = utils::get_date(year, month, day);
         let date_text = text(date.format("%A, %B %e, %Y").to_string())
             .horizontal_alignment(Horizontal::Center)
-            .size(TEXT_SIZE)
+            .size(settings.text_size())
             .width(500);
         let input = text_input("Event Title", &self.event)
             .on_input(AppMessage::TextEvent)
-            .size(TEXT_SIZE)
+            .size(settings.text_size())
             .width(500);
         let add_button = button(
             text("Add Event")
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center),
         )
-        .width(ADD_BUTTON_SIZE)
+        .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(AppMessage::AddEvent);
         let update_button = button(
             text("Update Event")
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center),
         )
-        .width(ADD_BUTTON_SIZE)
+        .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(AppMessage::UpdateEvent);
         let delete_button = button(
             text("Delete Event")
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center),
         )
-        .width(ADD_BUTTON_SIZE)
+        .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(AppMessage::DeleteEvent);
         let add_update_row = Row::new()
@@ -203,31 +204,31 @@ impl<'a> AddEvent {
             .push(update_button)
             .push(delete_button)
             .align_items(Alignment::Center)
-            .spacing(SPACING);
+            .spacing(settings.spacing());
         let event_button = button(
             text("Events")
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center),
         )
-        .width(ADD_BUTTON_SIZE)
+        .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(AppMessage::EventsWindow);
         let calendar_button = button(
             text("Calendar")
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center),
         )
-        .width(ADD_BUTTON_SIZE)
+        .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(AppMessage::CalendarWindow);
         let button_row = Row::new()
             .push(calendar_button)
             .push(event_button)
             .align_items(Alignment::Center)
-            .spacing(SPACING);
+            .spacing(settings.spacing());
         let content = column![date_text, input, add_update_row, button_row]
             .align_items(Alignment::Center)
-            .spacing(SPACING);
+            .spacing(settings.spacing());
         content.into()
     }
 }
