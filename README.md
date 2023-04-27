@@ -1,6 +1,6 @@
 # Since When?
 
-### A simple tool to track how long since something happened.
+### A simple tool to track how long it's been since something happened.
 
 App opens to a list of events showing how long it's been since the last time an event occurred, and the average time between occurrences.
 
