@@ -1,23 +1,19 @@
 use crate::app::AppMessage;
-use crate::utils;
+use crate::{utils, settings::Settings};
 use chrono::Datelike;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, row, text, Column, Row};
 use iced::{theme, Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
 
-const TEXT_SIZE: u16 = 50;
-const SPACING: u16 = 10;
-const CAL_TEXT_SIZE: u16 = 50;
-const CAL_WIDTH: u16 = CAL_TEXT_SIZE + 20;
-
 /// Creates a new row.
 ///
 /// # Returns
 /// - `Row<'static, AppMessage, Renderer>`
 pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
+    let settings = Settings::new();
     Row::new()
-        .spacing(SPACING)
+        .spacing(settings.spacing())
         .align_items(Vertical::Top.into())
 }
 
@@ -83,16 +79,17 @@ impl<'a> Calendar {
     /// # Returns
     /// - `Element<'a, AppMessage>`
     pub fn view(self) -> Element<'a, AppMessage> {
+        let settings = Settings::new();
         // Text to explain what to do.
-        let instructions = text("Click a day to add or update an event.").size(TEXT_SIZE);
+        let instructions = text("Click a day to add or update an event.").size(settings.text_size());
         // Create a row for current month, prev and next month buttons.
         let instruction_row = row!(instructions)
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .align_items(Vertical::Top.into());
-        let prev_button = button(text("<").size(TEXT_SIZE))
+        let prev_button = button(text("<").size(settings.text_size()))
             .style(theme::Button::Secondary)
             .on_press(AppMessage::PreviousMonth);
-        let next_button = button(text(">").size(TEXT_SIZE))
+        let next_button = button(text(">").size(settings.text_size()))
             .style(theme::Button::Secondary)
             .on_press(AppMessage::NextMonth);
 
@@ -101,15 +98,15 @@ impl<'a> Calendar {
             Some(month) => month,
             None => panic!("Invalid month"),
         };
-        let text_month = text(format!("{:?} - {}", month, self.year)).size(TEXT_SIZE);
+        let text_month = text(format!("{:?} - {}", month, self.year)).size(settings.text_size());
         // Create a row with the prev and next month buttons and the current month and year.
         let nav_row = row![prev_button, text_month, next_button]
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .align_items(Vertical::Top.into());
 
         // Create a column to hold the Calendar, buttons, and instructions.
         let mut content = Column::new()
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .align_items(Alignment::Center);
         content = content.push(instruction_row);
         content = content.push(nav_row);
@@ -135,12 +132,12 @@ impl<'a> Calendar {
             calendar_row = calendar_row.push(
                 button(
                     text(print_day)
-                        .size(CAL_TEXT_SIZE)
+                        .size(settings.calendar_text_size())
                         .horizontal_alignment(Horizontal::Center),
                 )
                 .style(theme::Button::Secondary)
                 .on_press(AppMessage::DayClicked(day, self.month, self.year))
-                .width(CAL_WIDTH),
+                .width(settings.calendar_width()),
             );
 
             if (i + 1) % 7 == 0 {
@@ -151,7 +148,7 @@ impl<'a> Calendar {
         content = content.push(calendar_row);
 
         // Add a button to go to the Events window.
-        let events_button = button(text("Events").size(TEXT_SIZE))
+        let events_button = button(text("Events").size(settings.text_size()))
             .on_press(AppMessage::EventsWindow)
             .style(theme::Button::Secondary);
         let button_row = row![events_button];

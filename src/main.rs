@@ -1,4 +1,3 @@
-#![windows_subsystem = "windows"]  // Prevents windows from opening a terminal window.
 /*
 Written in rust, using iced for the gui, and rusqlite for the data_base.
 This app is to track the time since an event has happened, expressed in days.
@@ -25,6 +24,7 @@ The app has three windows:
          - Buttons for returning to the main page and the calendar page are displayed at the
          bottom of the page.
  */
+#![windows_subsystem = "windows"]  // Prevents windows from opening a terminal window.
 
 use iced::{Application, Settings};
 use since_when_lib::app::SinceWhen;

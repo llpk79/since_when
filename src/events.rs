@@ -1,15 +1,10 @@
 use crate::app::AppMessage;
-use crate::database;
-use crate::utils;
+use crate::{database, utils, settings::Settings};
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
 use iced::Element;
 use log::{error};
-
-const TEXT_SIZE: u16 = 50;
-const SPACING: u16 = 20;
-const PADDING: u16 = 5;
 
 /// Event state.
 #[derive(Debug, Clone)]
@@ -36,6 +31,7 @@ impl<'a> EventsPage {
     /// # Returns
     /// - `Element<'a, AppMessage>`
     pub fn view(&self) -> Element<'a, AppMessage> {
+        let settings = Settings::new();
         // Open the data_base.
         let conn = database::setup_connection();
         // Get the events.
@@ -54,25 +50,25 @@ impl<'a> EventsPage {
         let averages = utils::get_averages(elapsed);
         // Create the columns.
         let mut event_column = Column::new()
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .width(333)
             .align_items(Alignment::Center);
         let mut date_column = Column::new()
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .width(333)
             .align_items(Alignment::Center);
         let mut avg_column = Column::new()
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .width(333)
             .align_items(Alignment::Center);
 
         // Create the column headers.
-        let event_header = text("Events").size(TEXT_SIZE);
-        let event_sep = text("_".repeat(36)).size(TEXT_SIZE / 4);
-        let date_header = text("Days  Since").size(TEXT_SIZE);
-        let date_sep = text("_".repeat(56)).size(TEXT_SIZE / 4);
-        let avg_header = text("Avg  Days").size(TEXT_SIZE);
-        let avg_sep = text("_".repeat(52)).size(TEXT_SIZE / 4);
+        let event_header = text("Event").size(settings.text_size());
+        let event_sep = text("_".repeat(34)).size(settings.text_size() / 4);
+        let date_header = text("Days  Since").size(settings.text_size());
+        let date_sep = text("_".repeat(56)).size(settings.text_size() / 4);
+        let avg_header = text("Avg").size(settings.text_size());
+        let avg_sep = text("_".repeat(24)).size(settings.text_size() / 4);
         event_column = event_column.push(event_header);
         event_column = event_column.push(event_sep);
         date_column = date_column.push(date_header);
@@ -90,22 +86,22 @@ impl<'a> EventsPage {
             if averages.contains_key(&days_since.0.clone()) {
                 let average = averages.get(&days_since.0.clone()).unwrap_or(&0);
                 let plural = if average > &1 { "s" } else { "" };
-                let average_text = Text::new(format!("{} day{}", average, plural)).size(TEXT_SIZE);
+                let average_text = Text::new(format!("{} day{}", average, plural)).size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             } else {
-                let average_text = Text::new("---").size(TEXT_SIZE);
+                let average_text = Text::new("---").size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             }
             let event_text = Text::new(days_since.0.clone())
-                .size(TEXT_SIZE)
+                .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center);
-            let date_text = Text::new(format!("{} day{} ago", days, plural)).size(TEXT_SIZE);
+            let date_text = Text::new(format!("{} day{} ago", days, plural)).size(settings.text_size());
             event_column = event_column.push(event_text);
             date_column = date_column.push(date_text);
         }
         // Layout the buttons and text.
-        let calendar_button = button(text("Add/Update Event").size(TEXT_SIZE))
-            .padding(PADDING)
+        let calendar_button = button(text("Add/Update Event").size(settings.text_size()))
+            .padding(settings.padding())
             .on_press(AppMessage::CalendarWindow)
             .style(iced::theme::Button::Secondary);
         let button_row = Row::new()
@@ -115,7 +111,7 @@ impl<'a> EventsPage {
             .push(event_column)
             .push(date_column)
             .push(avg_column)
-            .spacing(SPACING)
+            .spacing(settings.spacing())
             .align_items(Alignment::Center);
         let height = 20 * events.len() as u16;
         let content = Column::new()
@@ -124,7 +120,7 @@ impl<'a> EventsPage {
             .push(button_row)
             .push(vertical_space(height))
             .align_items(Alignment::Center)
-            .spacing(SPACING + 40);
+            .spacing(settings.spacing() + 40);
         content.into()
     }
 }
