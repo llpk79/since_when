@@ -1,7 +1,4 @@
-use crate::add_event;
-use crate::calendar;
-use crate::database;
-use crate::events;
+use crate::{add_event, calendar, database, events};
 use iced::theme::Theme;
 use iced::widget::{container, scrollable};
 use iced::{executor, Application, Command, Element, Length};

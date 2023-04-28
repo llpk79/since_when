@@ -1,10 +1,9 @@
-use crate::app::AppMessage;
-use crate::{database, utils, settings::Settings};
+use crate::{database, utils, settings::Settings, app::AppMessage};
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
 use iced::Element;
-use log::{error};
+use log::error;
 
 /// Event state.
 #[derive(Debug, Clone)]

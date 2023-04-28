@@ -1,5 +1,4 @@
-use crate::app::AppMessage;
-use crate::{utils, settings::Settings};
+use crate::{utils, settings::Settings, app::AppMessage};
 use chrono::Datelike;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, row, text, Column, Row};

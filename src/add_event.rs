@@ -1,6 +1,4 @@
-use crate::app::AppMessage;
-use crate::{database, utils};
-use crate::settings::Settings;
+use crate::{database, utils, settings::Settings, app::AppMessage};
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
