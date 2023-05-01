@@ -24,11 +24,11 @@ The app has three windows:
          - Buttons for returning to the main page and the calendar page are displayed at the
          bottom of the page.
  */
-#![windows_subsystem = "windows"]  // Prevents windows from opening a terminal window.
+#![windows_subsystem = "windows"] // Prevents windows from opening a terminal window.
 
+use env_logger::Env;
 use iced::{Application, Settings};
 use since_when_lib::app::SinceWhen;
-use env_logger::Env;
 extern crate log;
 
 /// The main function.

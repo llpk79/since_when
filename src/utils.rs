@@ -1,7 +1,7 @@
 use crate::events::EventOccurrence;
 use chrono::NaiveDate;
-use std::collections::HashMap;
 use log::error;
+use std::collections::HashMap;
 
 /// Get the date from the day, month, and year.
 ///

@@ -1,4 +1,4 @@
-use crate::{utils, settings::Settings, app::AppMessage};
+use crate::{app::AppMessage, settings::Settings, utils};
 use chrono::Datelike;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, row, text, Column, Row};
@@ -80,7 +80,8 @@ impl<'a> Calendar {
     pub fn view(self) -> Element<'a, AppMessage> {
         let settings = Settings::new();
         // Text to explain what to do.
-        let instructions = text("Click a day to add or update an event.").size(settings.text_size());
+        let instructions =
+            text("Click a day to add or update an event.").size(settings.text_size());
         // Create a row for current month, prev and next month buttons.
         let instruction_row = row!(instructions)
             .spacing(settings.spacing())

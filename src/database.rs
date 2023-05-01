@@ -1,6 +1,6 @@
 use crate::events::EventOccurrence;
+use log::{error, info};
 use rusqlite::{params, Connection, Result};
-use log::{info, error};
 
 /// Setup rusqlite connection.
 ///

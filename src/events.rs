@@ -1,4 +1,4 @@
-use crate::{database, utils, settings::Settings, app::AppMessage};
+use crate::{app::AppMessage, database, settings::Settings, utils};
 use iced::alignment::Horizontal;
 use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
@@ -92,7 +92,8 @@ impl<'a> EventsPage {
             if averages.contains_key(&event.0.clone()) {
                 let average = averages.get(&event.0.clone()).unwrap_or(&0);
                 let plural = if average > &1 { "s" } else { "" };
-                let average_text = Text::new(format!("{} day{}", average, plural)).size(settings.text_size());
+                let average_text =
+                    Text::new(format!("{} day{}", average, plural)).size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             } else {
                 let average_text = Text::new("---").size(settings.text_size());
@@ -101,7 +102,8 @@ impl<'a> EventsPage {
             let event_text = Text::new(event.0.clone())
                 .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center);
-            let date_text = Text::new(format!("{} day{} ago", days, plural)).size(settings.text_size());
+            let date_text =
+                Text::new(format!("{} day{} ago", days, plural)).size(settings.text_size());
             event_column = event_column.push(event_text);
             date_column = date_column.push(date_text);
         }
