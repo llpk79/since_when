@@ -1,9 +1,9 @@
-use crate::{database, utils, settings::Settings, app::AppMessage};
+use crate::{app::AppMessage, database, settings::Settings, utils};
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{button, column, text, text_input, Row};
 use iced::{theme, Alignment, Command, Element};
-use log::{info, error};
+use log::{error, info};
 
 /// AddEvent state.
 #[derive(Debug, Clone)]

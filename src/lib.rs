@@ -3,6 +3,6 @@ pub mod app;
 pub mod calendar;
 pub mod database;
 pub mod events;
-pub mod utils;
 pub mod settings;
+pub mod utils;
 extern crate log;
