@@ -75,15 +75,22 @@ impl<'a> EventsPage {
         avg_column = avg_column.push(avg_header);
         avg_column = avg_column.push(avg_sep);
 
+        // // Sort the events by days since.
+        let mut sorted_events = Vec::new();
+        for event in days_since_now.iter() {
+            sorted_events.push((event.0.clone(), event.1[0]));
+        }
+        sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
+
         // Create the event rows.
-        for days_since in days_since_now.iter() {
-            let days = days_since.1[0];
+        for event in sorted_events.iter() {
+            let days = event.1;
             let mut plural = String::new();
             if days != 1 {
                 plural = String::from("s");
             }
-            if averages.contains_key(&days_since.0.clone()) {
-                let average = averages.get(&days_since.0.clone()).unwrap_or(&0);
+            if averages.contains_key(&event.0.clone()) {
+                let average = averages.get(&event.0.clone()).unwrap_or(&0);
                 let plural = if average > &1 { "s" } else { "" };
                 let average_text = Text::new(format!("{} day{}", average, plural)).size(settings.text_size());
                 avg_column = avg_column.push(average_text);
@@ -91,7 +98,7 @@ impl<'a> EventsPage {
                 let average_text = Text::new("---").size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             }
-            let event_text = Text::new(days_since.0.clone())
+            let event_text = Text::new(event.0.clone())
                 .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center);
             let date_text = Text::new(format!("{} day{} ago", days, plural)).size(settings.text_size());
