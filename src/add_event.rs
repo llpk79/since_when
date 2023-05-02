@@ -1,8 +1,8 @@
 use crate::{app::AppMessage, database, settings::Settings, utils};
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
-use iced::widget::{button, column, text, text_input, Row};
-use iced::{theme, Alignment, Command, Element};
+use iced::widget::{button, column, text, text_input, Row, Button};
+use iced::{theme, Alignment, Command, Element, Renderer};
 use log::{error, info};
 
 /// AddEvent state.
@@ -153,6 +153,27 @@ impl<'a> AddEvent {
         Command::none()
     }
 
+    /// Make a new button.
+    ///
+    /// # Arguments
+    /// - message: `AppMessage` - The message to send when the button is pressed.
+    /// - label: `&str` - The label to display on the button.
+    ///
+    /// # Returns
+    /// - Button<'a, AppMessage, Renderer> - The button.
+    fn new_button(message: AppMessage, label: &str) -> Button<'a, AppMessage, Renderer> {
+        let settings = Settings::new();
+        let new_button: Button<'a, AppMessage, Renderer> = button(
+            text(label)
+                .size(settings.text_size())
+                .horizontal_alignment(Horizontal::Center),
+        )
+        .width(settings.add_button_size())
+        .style(theme::Button::Secondary)
+        .on_press(message);
+    new_button
+    }
+
     /// View for AddEvent.
     ///
     /// # Arguments
@@ -173,52 +194,17 @@ impl<'a> AddEvent {
             .on_input(AppMessage::TextEvent)
             .size(settings.text_size())
             .width(500);
-        let add_button = button(
-            text("Add Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::AddEvent);
-        let update_button = button(
-            text("Update Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::UpdateEvent);
-        let delete_button = button(
-            text("Delete Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::DeleteEvent);
+        let add_button = Self::new_button(AppMessage::AddEvent, "Add Event");
+        let update_button = Self::new_button(AppMessage::UpdateEvent, "Update Event");
+        let delete_button = Self::new_button(AppMessage::DeleteEvent, "Delete Event");
         let add_update_row = Row::new()
             .push(add_button)
             .push(update_button)
             .push(delete_button)
             .align_items(Alignment::Center)
             .spacing(settings.spacing());
-        let event_button = button(
-            text("Events")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::EventsWindow);
-        let calendar_button = button(
-            text("Calendar")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::CalendarWindow);
+        let event_button = Self::new_button(AppMessage::EventsWindow, "Events");
+        let calendar_button = Self::new_button(AppMessage::CalendarWindow, "Calendar");
         let button_row = Row::new()
             .push(calendar_button)
             .push(event_button)
