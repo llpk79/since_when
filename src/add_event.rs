@@ -1,9 +1,10 @@
-use crate::{app::AppMessage, database, settings::Settings, utils};
 use chrono::NaiveDate;
+use iced::{Alignment, Command, Element, Renderer, theme};
 use iced::alignment::Horizontal;
-use iced::widget::{button, column, text, text_input, Row, Button};
-use iced::{theme, Alignment, Command, Element, Renderer};
+use iced::widget::{button, Button, column, Row, text, text_input};
 use log::{error, info};
+
+use crate::{app::AppMessage, database, settings::Settings, utils};
 
 /// AddEvent state.
 #[derive(Debug, Clone)]
@@ -171,7 +172,7 @@ impl<'a> AddEvent {
         .width(settings.add_button_size())
         .style(theme::Button::Secondary)
         .on_press(message);
-    new_button
+        new_button
     }
 
     /// View for AddEvent.
