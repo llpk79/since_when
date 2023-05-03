@@ -1,9 +1,10 @@
-use crate::{app::AppMessage, database, settings::Settings, utils};
-use iced::alignment::Horizontal;
-use iced::widget::{button, text, vertical_space, Column, Row, Text};
 use iced::Alignment;
+use iced::alignment::Horizontal;
 use iced::Element;
+use iced::widget::{button, Column, Row, text, Text, vertical_space};
 use log::error;
+
+use crate::{app::AppMessage, database, settings::Settings, utils};
 
 /// Event state.
 #[derive(Debug, Clone)]
@@ -20,6 +21,26 @@ pub struct EventsPage {}
 impl<'a> EventsPage {
     pub fn new() -> EventsPage {
         Self {}
+    }
+
+    /// Create columns for events page.
+    ///
+    /// # Arguments
+    /// - `&mut self`
+    ///
+    /// # Returns
+    /// - `Column<'a, AppMessage>`
+    fn make_column(label: &str) -> Column<AppMessage> {
+        let settings = Settings::new();
+        let mut column = Column::new()
+            .spacing(settings.spacing())
+            .width(333)
+            .align_items(Alignment::Center);
+        let header = text(label).size(settings.text_size());
+        let sep = text("_".repeat(label.len() * 6)).size(settings.text_size() / 4);
+        column = column.push(header);
+        column = column.push(sep);
+        column
     }
 
     /// View the events page.
@@ -46,41 +67,13 @@ impl<'a> EventsPage {
         // Calculate the elapsed days between event occurrences.
         let elapsed = utils::get_elapsed_days(&days_since_now);
         // Calculate the average elapsed days between occurrences.
-        let averages = utils::get_averages(elapsed);
+        let averages = utils::get_averages(&elapsed);
+        // Sort the events by days since.
+        let sorted_events = utils::sort_events(&days_since_now);
         // Create the columns.
-        let mut event_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-        let mut date_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-        let mut avg_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-
-        // Create the column headers.
-        let event_header = text("Event").size(settings.text_size());
-        let event_sep = text("_".repeat(34)).size(settings.text_size() / 4);
-        let date_header = text("Days  Since").size(settings.text_size());
-        let date_sep = text("_".repeat(56)).size(settings.text_size() / 4);
-        let avg_header = text("Avg").size(settings.text_size());
-        let avg_sep = text("_".repeat(24)).size(settings.text_size() / 4);
-        event_column = event_column.push(event_header);
-        event_column = event_column.push(event_sep);
-        date_column = date_column.push(date_header);
-        date_column = date_column.push(date_sep);
-        avg_column = avg_column.push(avg_header);
-        avg_column = avg_column.push(avg_sep);
-
-        // // Sort the events by days since.
-        let mut sorted_events = Vec::new();
-        for event in days_since_now.iter() {
-            sorted_events.push((event.0.clone(), event.1[0]));
-        }
-        sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
+        let mut event_column = Self::make_column("Event");
+        let mut date_column = Self::make_column("Days  Since");
+        let mut avg_column = Self::make_column("Avg");
 
         // Create the event rows.
         for event in sorted_events.iter() {
