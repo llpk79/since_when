@@ -1,7 +1,9 @@
-use crate::events::EventOccurrence;
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use log::error;
-use std::collections::HashMap;
+
+use crate::events::EventOccurrence;
 
 /// Get the date from the day, month, and year.
 ///
@@ -120,13 +122,29 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// expected.entry("foo".to_string()).or_insert(22);
 /// expected.entry("bar".to_string()).or_insert(11);
 ///
-/// assert_eq!(get_averages(averages), expected);
+/// assert_eq!(get_averages(&averages), expected);
 /// ```
-pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
+pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
     let mut averages: HashMap<String, i32> = HashMap::new();
     for item in elapsed.iter() {
         let average = item.1.iter().sum::<i32>() / item.1.len() as i32;
         averages.entry(item.0.to_string()).or_insert(average);
     }
     averages
+}
+
+/// Sort events by days since now.
+///
+/// ### Arguments
+/// - events - `&[EventOccurrence]`
+///
+/// ### Returns
+/// - `Vec<EventOccurrence>`
+pub fn sort_events(events: &HashMap<String, Vec<i32>>) -> Vec<(String, i32)> {
+    let mut sorted_events = Vec::new();
+    for event in events.iter() {
+        sorted_events.push((event.0.clone(), event.1[0]));
+    }
+    sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
+    sorted_events
 }
