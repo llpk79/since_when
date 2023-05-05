@@ -1,9 +1,8 @@
-use crate::{app::AppMessage, database, settings::Settings, utils};
+use crate::{app::AppMessage, settings::Settings, utils};
 use iced::alignment::Horizontal;
-use iced::widget::{button, text, vertical_space, Column, Row, Text};
+use iced::widget::{row, text, vertical_space, Column, Text};
 use iced::Alignment;
 use iced::Element;
-use log::error;
 
 /// Event state.
 #[derive(Debug, Clone)]
@@ -16,117 +15,115 @@ pub struct EventOccurrence {
 #[derive(Debug, Clone)]
 pub struct EventsPage {}
 
+// Default EventsPage implementation.
+impl Default for EventsPage {
+    fn default() -> Self {
+        EventsPage::new()
+    }
+}
+
 ///Events page implementation.
 impl<'a> EventsPage {
     pub fn new() -> EventsPage {
         Self {}
     }
 
-    /// View the events page.
+    /// Create columns with header for events page.
     ///
-    /// # Arguments
-    /// - `&self`
+    /// ### Arguments
+    /// - label: `&str`
     ///
-    /// # Returns
-    /// - `Element<'a, AppMessage>`
-    pub fn view(&self) -> Element<'a, AppMessage> {
+    /// ### Returns
+    /// - `Column<AppMessage>`
+    fn make_column(label: &str) -> Column<AppMessage> {
         let settings = Settings::new();
-        // Open the data_base.
-        let conn = database::setup_connection();
-        // Get the events.
-        let events = match database::get_events(&conn) {
-            Ok(events) => events,
-            Err(e) => {
-                error!("Error: {}", e);
-                vec![]
-            }
-        };
-        // Calculate the days since each event.
-        let days_since_now = utils::get_days_since_now(&events);
-        // Calculate the elapsed days between event occurrences.
-        let elapsed = utils::get_elapsed_days(&days_since_now);
-        // Calculate the average elapsed days between occurrences.
-        let averages = utils::get_averages(elapsed);
+        let mut column = Column::new()
+            .spacing(settings.spacing())
+            .width(333)
+            .align_items(Alignment::Center);
+        let header = text(label).size(settings.text_size());
+        let sep = text("_".repeat((label.len() * 5) + 5)).size(settings.text_size() / 4);
+        column = column.push(header);
+        column = column.push(sep);
+        column
+    }
+
+    /// Create the event columns.
+    ///
+    /// ### Arguments
+    /// - event_details: `Vec<(String, i32, i32)>` - The event name, days since, average.
+    ///
+    /// ### Returns
+    /// - (`Column<'a, AppMessage>`, `Column<'a, AppMessage>`, `Column<'a, AppMessage>`, u16)
+    /// - The event column, date column, average column, and number of events.
+    fn event_columns() -> (
+        Column<'a, AppMessage>,
+        Column<'a, AppMessage>,
+        Column<'a, AppMessage>,
+        u16, // number of events
+    ) {
+        let settings = Settings::new();
         // Create the columns.
-        let mut event_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-        let mut date_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-        let mut avg_column = Column::new()
-            .spacing(settings.spacing())
-            .width(333)
-            .align_items(Alignment::Center);
-
-        // Create the column headers.
-        let event_header = text("Event").size(settings.text_size());
-        let event_sep = text("_".repeat(34)).size(settings.text_size() / 4);
-        let date_header = text("Days  Since").size(settings.text_size());
-        let date_sep = text("_".repeat(56)).size(settings.text_size() / 4);
-        let avg_header = text("Avg").size(settings.text_size());
-        let avg_sep = text("_".repeat(24)).size(settings.text_size() / 4);
-        event_column = event_column.push(event_header);
-        event_column = event_column.push(event_sep);
-        date_column = date_column.push(date_header);
-        date_column = date_column.push(date_sep);
-        avg_column = avg_column.push(avg_header);
-        avg_column = avg_column.push(avg_sep);
-
-        // // Sort the events by days since.
-        let mut sorted_events = Vec::new();
-        for event in days_since_now.iter() {
-            sorted_events.push((event.0.clone(), event.1[0]));
-        }
-        sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
-
+        let mut event_column = Self::make_column("Event");
+        let mut date_column = Self::make_column("Days  Since");
+        let mut avg_column = Self::make_column("Avg");
         // Create the event rows.
-        for event in sorted_events.iter() {
-            let days = event.1;
-            let mut plural = String::new();
-            if days != 1 {
-                plural = String::from("s");
-            }
-            if averages.contains_key(&event.0.clone()) {
-                let average = averages.get(&event.0.clone()).unwrap_or(&0);
-                let plural = if average > &1 { "s" } else { "" };
+        // event_details is a vector of tuples (event_name, days_since, average).
+        let mut num_events = 0; // for setting the height of the scrollable.
+        for event in utils::event_details().iter() {
+            num_events += 1;
+            // Text for the event name.
+            let event_text = Text::new(event.0.clone())
+                .size(settings.text_size())
+                .horizontal_alignment(Horizontal::Center);
+            event_column = event_column.push(event_text);
+            // Text for the days since.
+            let days_since = event.1;
+            let plural = if days_since != 1 { "s" } else { "" };
+            let days_since_text =
+                Text::new(format!("{} day{} ago", days_since, plural)).size(settings.text_size());
+            date_column = date_column.push(days_since_text);
+            // Text for the average.
+            if event.2 != 0 {
+                let plural = if event.2 > 1 { "s" } else { "" };
                 let average_text =
-                    Text::new(format!("{} day{}", average, plural)).size(settings.text_size());
+                    Text::new(format!("{} day{}", event.2, plural)).size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             } else {
                 let average_text = Text::new("---").size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             }
-            let event_text = Text::new(event.0.clone())
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center);
-            let date_text =
-                Text::new(format!("{} day{} ago", days, plural)).size(settings.text_size());
-            event_column = event_column.push(event_text);
-            date_column = date_column.push(date_text);
         }
-        // Layout the buttons and text.
-        let calendar_button = button(text("Add/Update Event").size(settings.text_size()))
-            .padding(settings.padding())
-            .on_press(AppMessage::CalendarWindow)
-            .style(iced::theme::Button::Secondary);
-        let button_row = Row::new()
-            .push(calendar_button)
-            .align_items(Alignment::Center);
-        let event_row = Row::new()
-            .push(event_column)
-            .push(date_column)
-            .push(avg_column)
+        (event_column, date_column, avg_column, num_events)
+    }
+
+    /// View the events page.
+    ///
+    /// ### Arguments
+    /// - `&self`
+    ///
+    /// ### Returns
+    /// - `Element<'a, AppMessage>`
+    pub fn view(&self) -> Element<'a, AppMessage> {
+        let settings = Settings::new();
+        // Get the event details and create the columns.
+        let (event_column, date_column, avg_column, num_events) = Self::event_columns();
+        // Align the columns into a row.
+        let event_row = row![event_column, date_column, avg_column]
             .spacing(settings.spacing())
             .align_items(Alignment::Center);
-        let height = 20 * events.len() as u16;
+        // Button for adding/updating events.
+        let calendar_button = utils::new_button(
+            AppMessage::CalendarWindow,
+            "Add/Update Event",
+            settings.add_button_size() + 100,
+        );
+        // Arrange the content.
         let content = Column::new()
             .push(vertical_space(50))
             .push(event_row)
-            .push(button_row)
-            .push(vertical_space(height))
+            .push(calendar_button)
+            .push(vertical_space(num_events * 20))
             .align_items(Alignment::Center)
             .spacing(settings.spacing() + 40);
         content.into()

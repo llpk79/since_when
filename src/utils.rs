@@ -1,7 +1,16 @@
-use crate::events::EventOccurrence;
+use std::collections::HashMap;
+
 use chrono::NaiveDate;
 use log::error;
-use std::collections::HashMap;
+
+use crate::database;
+use crate::events::EventOccurrence;
+
+use crate::app::AppMessage;
+use crate::settings::Settings;
+use iced::alignment::{Horizontal, Vertical};
+use iced::widget::{button, text, Button, Row};
+use iced::{theme, Renderer};
 
 /// Get the date from the day, month, and year.
 ///
@@ -120,13 +129,93 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// expected.entry("foo".to_string()).or_insert(22);
 /// expected.entry("bar".to_string()).or_insert(11);
 ///
-/// assert_eq!(get_averages(averages), expected);
+/// assert_eq!(get_averages(&averages), expected);
 /// ```
-pub fn get_averages(elapsed: HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
+pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
     let mut averages: HashMap<String, i32> = HashMap::new();
     for item in elapsed.iter() {
         let average = item.1.iter().sum::<i32>() / item.1.len() as i32;
         averages.entry(item.0.to_string()).or_insert(average);
     }
     averages
+}
+
+/// Sort events by days since now.
+///
+/// ### Arguments
+/// - events - `&[EventOccurrence]`
+///
+/// ### Returns
+/// - `Vec<EventOccurrence>`
+pub fn sort_events(
+    events: &HashMap<String, Vec<i32>>,
+    averages: &HashMap<String, i32>,
+) -> Vec<(String, i32, i32)> {
+    let mut sorted_events = Vec::new();
+    for event in events.iter() {
+        sorted_events.push((
+            event.0.clone(),
+            event.1[0],
+            *averages.get(&event.0.clone()).unwrap_or(&0),
+        ));
+    }
+    sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
+    sorted_events
+}
+
+pub fn event_details() -> Vec<(String, i32, i32)> {
+    // Open the data_base.
+    let conn = database::setup_connection();
+    // Get the events.
+    let events = match database::get_events(&conn) {
+        Ok(events) => events,
+        Err(e) => {
+            error!("Error: {}", e);
+            vec![]
+        }
+    };
+    // Calculate the days since each event.
+    let days_since_now = get_days_since_now(&events);
+    // Calculate the elapsed days between event occurrences.
+    let elapsed = get_elapsed_days(&days_since_now);
+    // Calculate the average elapsed days between occurrences.
+    let averages = get_averages(&elapsed);
+    // Sort the events by days since.
+    sort_events(&days_since_now, &averages)
+}
+
+/// Make a new button.
+///
+/// # Arguments
+/// - message: `AppMessage` - The message to send when the button is pressed.
+/// - label: `&str` - The label to display on the button.
+///
+/// # Returns
+/// - Button<'a, AppMessage, Renderer> - The button.
+pub fn new_button<'a>(
+    message: AppMessage,
+    label: &str,
+    width: u16,
+) -> Button<'a, AppMessage, Renderer> {
+    let settings = Settings::new();
+    let new_button: Button<'a, AppMessage, Renderer> = button(
+        text(label)
+            .size(settings.text_size())
+            .horizontal_alignment(Horizontal::Center),
+    )
+    .width(width)
+    .style(theme::Button::Secondary)
+    .on_press(message);
+    new_button
+}
+
+/// Creates a new row.
+///
+/// ### Returns
+/// - `Row<'static, AppMessage, Renderer>`
+pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
+    let settings = Settings::new();
+    Row::new()
+        .spacing(settings.spacing())
+        .align_items(Vertical::Top.into())
 }

@@ -1,9 +1,15 @@
-use crate::{app::AppMessage, database, settings::Settings, utils};
 use chrono::NaiveDate;
 use iced::alignment::Horizontal;
-use iced::widget::{button, column, text, text_input, Row};
-use iced::{theme, Alignment, Command, Element};
+use iced::widget::{column, row, text, text_input};
+use iced::{Alignment, Command, Element};
 use log::{error, info};
+
+use crate::{
+    app::AppMessage,
+    database::{get_event_id, sql_insert, setup_connection},
+    settings::Settings,
+    utils::{get_date, new_button},
+};
 
 /// AddEvent state.
 #[derive(Debug, Clone)]
@@ -33,7 +39,7 @@ impl<'a> AddEvent {
         }
     }
 
-    /// Update the state of the AddEvent page.
+    /// Add, Update or Delete Events.
     ///
     /// # Arguments
     /// - message: `AppMessage` - The message to process.
@@ -50,8 +56,8 @@ impl<'a> AddEvent {
         month: u32,
         year: i32,
     ) -> Command<AppMessage> {
-        let conn = database::setup_connection();
-        self.date = utils::get_date(year, month, day);
+        let conn = setup_connection();
+        self.date = get_date(year, month, day);
         match message {
             AppMessage::AddEvent => {
                 info!("Adding Event {:?} on {:?}", &self.event, &self.date);
@@ -59,7 +65,7 @@ impl<'a> AddEvent {
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                match database::sql_insert(
+                match sql_insert(
                     &conn,
                     (0, false),
                     ("", false),
@@ -68,9 +74,9 @@ impl<'a> AddEvent {
                 ) {
                     Ok(_) => {
                         info!("Event added: {:?}", &self.event);
-                        let id = database::get_event_id(&conn, &self.event);
+                        let id = get_event_id(&conn, &self.event);
                         // Add the occurrence to the data_base.
-                        match database::sql_insert(
+                        match sql_insert(
                             &conn,
                             (id, true),
                             (&self.date.to_string(), true),
@@ -92,9 +98,9 @@ impl<'a> AddEvent {
                 };
             }
             AppMessage::UpdateEvent => {
-                let id = database::get_event_id(&conn, &self.event);
+                let id = get_event_id(&conn, &self.event);
                 // Add the occurrence to the data_base.
-                match database::sql_insert(
+                match sql_insert(
                     &conn,
                     (id, true),
                     (&self.date.to_string(), true),
@@ -110,9 +116,9 @@ impl<'a> AddEvent {
                 };
             }
             AppMessage::DeleteEvent => {
-                let id = database::get_event_id(&conn, &self.event);
+                let id = get_event_id(&conn, &self.event);
                 // Delete occurrence.
-                match database::sql_insert(
+                match sql_insert(
                     &conn,
                     (id, true),
                     ("", false),
@@ -122,7 +128,7 @@ impl<'a> AddEvent {
                     Ok(_) => {
                         info!("Occurrences deleted.");
                         // Delete event.
-                        match database::sql_insert(
+                        match sql_insert(
                             &conn,
                             (0, false),
                             ("", false),
@@ -164,7 +170,8 @@ impl<'a> AddEvent {
     /// - `Element<'a, AppMessage>` - The view.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
         let settings = Settings::new();
-        let date = utils::get_date(year, month, day);
+        // Date and event input.
+        let date = get_date(year, month, day);
         let date_text = text(date.format("%A, %B %e, %Y").to_string())
             .horizontal_alignment(Horizontal::Center)
             .size(settings.text_size())
@@ -173,58 +180,40 @@ impl<'a> AddEvent {
             .on_input(AppMessage::TextEvent)
             .size(settings.text_size())
             .width(500);
-        let add_button = button(
-            text("Add Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::AddEvent);
-        let update_button = button(
-            text("Update Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::UpdateEvent);
-        let delete_button = button(
-            text("Delete Event")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::DeleteEvent);
-        let add_update_row = Row::new()
-            .push(add_button)
-            .push(update_button)
-            .push(delete_button)
+        // Action buttons.
+        let add_button = new_button(
+            AppMessage::AddEvent,
+            "Add Event",
+            settings.add_button_size(),
+        );
+        let update_button = new_button(
+            AppMessage::UpdateEvent,
+            "Update Event",
+            settings.add_button_size(),
+        );
+        let delete_button = new_button(
+            AppMessage::DeleteEvent,
+            "Delete Event",
+            settings.add_button_size(),
+        );
+        let action_row = row![add_button, update_button, delete_button]
             .align_items(Alignment::Center)
             .spacing(settings.spacing());
-        let event_button = button(
-            text("Events")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::EventsWindow);
-        let calendar_button = button(
-            text("Calendar")
-                .size(settings.text_size())
-                .horizontal_alignment(Horizontal::Center),
-        )
-        .width(settings.add_button_size())
-        .style(theme::Button::Secondary)
-        .on_press(AppMessage::CalendarWindow);
-        let button_row = Row::new()
-            .push(calendar_button)
-            .push(event_button)
+        // Navigation buttons.
+        let event_button = new_button(
+            AppMessage::EventsWindow,
+            "Events",
+            settings.add_button_size(),
+        );
+        let calendar_button = new_button(
+            AppMessage::CalendarWindow,
+            "Calendar",
+            settings.add_button_size(),
+        );
+        let nav_row = row![calendar_button, event_button]
             .align_items(Alignment::Center)
             .spacing(settings.spacing());
-        let content = column![date_text, input, add_update_row, button_row]
+        let content = column![date_text, input, action_row, nav_row]
             .align_items(Alignment::Center)
             .spacing(settings.spacing());
         content.into()
