@@ -1,26 +1,26 @@
-use crate::{app::AppMessage, settings::Settings, utils};
+use crate::{
+    app::AppMessage,
+    settings::Settings,
+    utils::{get_date, make_new_row, new_button},
+};
 use chrono::Datelike;
-use iced::alignment::{Horizontal, Vertical};
-use iced::widget::{button, row, text, Column, Row};
-use iced::{theme, Alignment, Command, Element, Renderer};
+use iced::alignment::Vertical;
+use iced::widget::{row, text, Column, Row};
+use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
-
-/// Creates a new row.
-///
-/// # Returns
-/// - `Row<'static, AppMessage, Renderer>`
-pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
-    let settings = Settings::new();
-    Row::new()
-        .spacing(settings.spacing())
-        .align_items(Vertical::Top.into())
-}
 
 /// The state of the Calendar.
 #[derive(Debug, Clone, Copy)]
 pub struct Calendar {
     month: u32,
     year: i32,
+}
+
+/// Default Calendar implementation.
+impl Default for Calendar {
+    fn default() -> Self {
+        Calendar::new()
+    }
 }
 
 /// Calendar window implementation.
@@ -35,10 +35,10 @@ impl<'a> Calendar {
 
     /// Updates the Calendar State via messages.
     ///
-    /// # Arguments
+    /// ### Arguments
     /// - message - `AppMessage`
     ///
-    /// # Returns
+    /// ### Returns
     /// - `Command<AppMessage>`
     pub fn update(&mut self, message: AppMessage) -> Command<AppMessage> {
         match message {
@@ -69,90 +69,110 @@ impl<'a> Calendar {
         Command::none()
     }
 
-    /// Create the Calendar view.
+    /// Instructions for the Calendar window.
     ///
-    /// The Calendar is a 7 x 6 grid of day buttons.
-    /// Buttons for moving to the next and previous month.
-    /// Button for adding an event.
-    ///
-    /// # Returns
-    /// - `Element<'a, AppMessage>`
-    pub fn view(self) -> Element<'a, AppMessage> {
-        let settings = Settings::new();
+    /// ### Returns
+    /// - `Row<'a, AppMessage, Renderer>`
+    fn instruction_row(self) -> Row<'a, AppMessage, Renderer> {
         // Text to explain what to do.
+        let settings = Settings::new();
         let instructions =
             text("Click a day to add or update an event.").size(settings.text_size());
         // Create a row for current month, prev and next month buttons.
         let instruction_row = row!(instructions)
             .spacing(settings.spacing())
             .align_items(Vertical::Top.into());
-        let prev_button = button(text("<").size(settings.text_size()))
-            .style(theme::Button::Secondary)
-            .on_press(AppMessage::PreviousMonth);
-        let next_button = button(text(">").size(settings.text_size()))
-            .style(theme::Button::Secondary)
-            .on_press(AppMessage::NextMonth);
+        instruction_row
+    }
 
+    /// Creates a row with the current month and year and prev and next month buttons.
+    ///
+    /// ### Returns
+    /// - `Row<'a, AppMessage, Renderer>`
+    fn nav_row(self) -> Row<'a, AppMessage, Renderer> {
+        let settings = Settings::new();
+        let prev_button = new_button(AppMessage::PreviousMonth, "<", settings.text_size());
         // Display the current month and year.
         let month = match chrono::Month::from_u32(self.month) {
             Some(month) => month,
             None => panic!("Invalid month"),
         };
         let text_month = text(format!("{:?} - {}", month, self.year)).size(settings.text_size());
-        // Create a row with the prev and next month buttons and the current month and year.
-        let nav_row = row![prev_button, text_month, next_button]
+        let next_button = new_button(AppMessage::NextMonth, ">", settings.text_size());
+        // Return a row with the prev and next month buttons and the current month and year.
+        row![prev_button, text_month, next_button]
             .spacing(settings.spacing())
-            .align_items(Vertical::Top.into());
+            .align_items(Vertical::Top.into())
+    }
 
-        // Create a column to hold the Calendar, buttons, and instructions.
-        let mut content = Column::new()
+    /// Creates the Calendar view.
+    ///
+    /// ### Returns
+    /// - `Column<'a, AppMessage, Renderer>`
+    fn calendar(self) -> Column<'a, AppMessage, Renderer> {
+        let settings = Settings::new();
+        // Create a column to hold the Calendar.
+        let mut calendar = Column::new()
             .spacing(settings.spacing())
             .align_items(Alignment::Center);
-        content = content.push(instruction_row);
-        content = content.push(nav_row);
-
-        // Draw the Calendar.
-        let month_lengths = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        // Get the first weekday of the month to determine where to start the Calendar.
-        let first_day = utils::get_date(self.year, self.month, 1);
+        let mut calendar_row = make_new_row();
+        // Get the weekday of the first day of the month to determine where to start the Calendar.
+        let first_day = get_date(self.year, self.month, 1);
         let weekday = first_day.weekday();
         let from_sun = weekday.num_days_from_sunday() as i32;
+        // Get the offset to start the Calendar.
         let offset = from_sun - 1;
-        let mut calendar_row = make_new_row();
+        // Variables to hold the current day and the day to display.
         let mut day: u32;
         let mut print_day: String;
+        let month_lengths = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        // Iterate through the days of the month.
         for i in 0..42 {
-            if (from_sun <= i) && (i < month_lengths[(self.month - 1) as usize] + offset + 1) {
+            // If the current day is between the first day of the month and the last day of the month, display the day.
+            if (from_sun <= i) && (i < month_lengths[(self.month - 1) as usize] + from_sun) {
                 day = (i - offset) as u32;
                 print_day = format!("{}", day)
             } else {
                 day = 0;
                 print_day = " ".to_string()
             };
-            calendar_row = calendar_row.push(
-                button(
-                    text(print_day)
-                        .size(settings.calendar_text_size())
-                        .horizontal_alignment(Horizontal::Center),
-                )
-                .style(theme::Button::Secondary)
-                .on_press(AppMessage::DayClicked(day, self.month, self.year))
-                .width(settings.calendar_width()),
-            );
-
+            calendar_row = calendar_row.push(new_button(
+                AppMessage::DayClicked(day, self.month, self.year),
+                &print_day,
+                settings.calendar_width(),
+            ));
+            // If the current day is a Saturday, start a new row.
             if (i + 1) % 7 == 0 {
-                content = content.push(calendar_row);
+                calendar = calendar.push(calendar_row);
                 calendar_row = make_new_row();
             }
         }
-        content = content.push(calendar_row);
+        calendar = calendar.push(calendar_row);
+        calendar
+    }
 
-        // Add a button to go to the Events window.
-        let events_button = button(text("Events").size(settings.text_size()))
-            .on_press(AppMessage::EventsWindow)
-            .style(theme::Button::Secondary);
-        let button_row = row![events_button];
-        content = content.push(button_row);
+    /// Create the Calendar view.
+    ///
+    /// The Calendar is a 7 x 6 grid of day buttons.
+    /// Buttons for moving to the next and previous month.
+    /// Button for adding an event.
+    ///
+    /// ### Returns
+    /// - `Element<'a, AppMessage>`
+    pub fn view(self) -> Element<'a, AppMessage> {
+        let settings = Settings::new();
+        // Create a column to hold the calendar, nav buttons, and instructions.
+        let content = Column::new()
+            .push(self.instruction_row())
+            .push(self.nav_row())
+            .push(self.calendar())
+            .push(new_button(
+                AppMessage::EventsWindow,
+                "Events",
+                settings.add_button_size(),
+            ))
+            .spacing(settings.spacing())
+            .align_items(Alignment::Center);
         content.into()
     }
 }
