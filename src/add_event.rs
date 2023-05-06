@@ -2,11 +2,11 @@ use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{column, row, text, text_input};
 use iced::{Alignment, Command, Element};
-use log::{error, info};
+use log::info;
 
 use crate::{
     app::AppMessage,
-    database::{get_event_id, sql_insert, setup_connection},
+    database::{add_event, delete_event, update_event},
     settings::Settings,
     utils::{get_date, new_button},
 };
@@ -56,99 +56,25 @@ impl<'a> AddEvent {
         month: u32,
         year: i32,
     ) -> Command<AppMessage> {
-        let conn = setup_connection();
         self.date = get_date(year, month, day);
         match message {
             AppMessage::AddEvent => {
-                info!("Adding Event {:?} on {:?}", &self.event, &self.date);
-                // Add the event to the data_base.
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                match sql_insert(
-                    &conn,
-                    (0, false),
-                    ("", false),
-                    (&self.event.clone(), true),
-                    "INSERT INTO events (name) VALUES (?1);",
-                ) {
-                    Ok(_) => {
-                        info!("Event added: {:?}", &self.event);
-                        let id = get_event_id(&conn, &self.event);
-                        // Add the occurrence to the data_base.
-                        match sql_insert(
-                            &conn,
-                            (id, true),
-                            (&self.date.to_string(), true),
-                            ("", false),
-                            "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
-                        ) {
-                            Ok(_) => {
-                                info!("Occurrence added: {}, {}", &self.event, &self.date);
-                            }
-                            Err(e) => {
-                                error!("Error: {:?}", e);
-                            }
-                        };
-                    }
-                    // If the event already exists, do not add the occurrence.
-                    Err(e) => {
-                        error!("Error: {:?}", e);
-                    }
-                };
+                add_event(&self.event, &self.date.to_string());
             }
             AppMessage::UpdateEvent => {
-                let id = get_event_id(&conn, &self.event);
-                // Add the occurrence to the data_base.
-                match sql_insert(
-                    &conn,
-                    (id, true),
-                    (&self.date.to_string(), true),
-                    ("", false),
-                    "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
-                ) {
-                    Ok(_) => {
-                        info!("Occurrence added: {} on {}", &self.event, &self.date);
-                    }
-                    Err(e) => {
-                        error!("Error: {:?}", e);
-                    }
-                };
+                if self.event.is_empty() {
+                    return Command::none();
+                }
+                update_event(&self.event, &self.date.to_string());
             }
             AppMessage::DeleteEvent => {
-                let id = get_event_id(&conn, &self.event);
-                // Delete occurrence.
-                match sql_insert(
-                    &conn,
-                    (id, true),
-                    ("", false),
-                    ("", false),
-                    "DELETE FROM occurrences WHERE event_id = ?1;",
-                ) {
-                    Ok(_) => {
-                        info!("Occurrences deleted.");
-                        // Delete event.
-                        match sql_insert(
-                            &conn,
-                            (0, false),
-                            ("", false),
-                            (&self.event.clone(), true),
-                            "DELETE FROM events WHERE name = ?1;",
-                        ) {
-                            Ok(_) => {
-                                info!("Event deleted: {}", &self.event);
-                            }
-                            Err(e) => {
-                                error!("Error: {:?}", e);
-                            }
-                        }
-                        id
-                    }
-                    Err(e) => {
-                        error!("Error: {:?}", e);
-                        0
-                    }
-                };
+                if self.event.is_empty() {
+                    return Command::none();
+                }
+                delete_event(&self.event);
             }
             AppMessage::TextEvent(s) => {
                 self.event = s;
