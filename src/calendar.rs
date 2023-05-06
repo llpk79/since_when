@@ -1,13 +1,14 @@
-use crate::{
-    app::AppMessage,
-    settings::Settings,
-    utils::{get_date, make_new_row, new_button},
-};
 use chrono::Datelike;
 use iced::alignment::Vertical;
 use iced::widget::{row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
+
+use crate::{
+    app::AppMessage,
+    settings::Settings,
+    utils::{get_date, make_new_row, new_button},
+};
 
 /// The state of the Calendar.
 #[derive(Debug, Clone, Copy)]
@@ -79,13 +80,13 @@ impl<'a> Calendar {
         let instructions =
             text("Click a day to add or update an event.").size(settings.text_size());
         // Create a row for current month, prev and next month buttons.
-        let instruction_row = row!(instructions)
+        let instruction_row = row![instructions]
             .spacing(settings.spacing())
             .align_items(Vertical::Top.into());
         instruction_row
     }
 
-    /// Creates a row with the current month and year and prev and next month buttons.
+    /// Creates a row with the current month and year, prev and next month buttons.
     ///
     /// ### Returns
     /// - `Row<'a, AppMessage, Renderer>`
@@ -132,6 +133,7 @@ impl<'a> Calendar {
             if (from_sun <= i) && (i < month_lengths[(self.month - 1) as usize] + from_sun) {
                 day = (i - offset) as u32;
                 print_day = format!("{}", day)
+            // Otherwise, display a blank space.
             } else {
                 day = 0;
                 print_day = " ".to_string()
@@ -154,8 +156,6 @@ impl<'a> Calendar {
     /// Create the Calendar view.
     ///
     /// The Calendar is a 7 x 6 grid of day buttons.
-    /// Buttons for moving to the next and previous month.
-    /// Button for adding an event.
     ///
     /// ### Returns
     /// - `Element<'a, AppMessage>`

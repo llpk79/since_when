@@ -8,6 +8,12 @@ pub struct Settings {
     padding: u16,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Settings {
     pub fn new() -> Self {
         Self {

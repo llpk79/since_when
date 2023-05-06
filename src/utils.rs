@@ -1,26 +1,25 @@
 use std::collections::HashMap;
 
 use chrono::NaiveDate;
-use log::error;
-
-use crate::database;
-use crate::events::EventOccurrence;
-
-use crate::app::AppMessage;
-use crate::settings::Settings;
 use iced::alignment::{Horizontal, Vertical};
 use iced::widget::{button, text, Button, Row};
 use iced::{theme, Renderer};
+use log::error;
+
+use crate::app::AppMessage;
+use crate::database;
+use crate::events::EventOccurrence;
+use crate::settings::Settings;
 
 /// Get the date from the day, month, and year.
 ///
-/// # Arguments
-/// - year: i32
-/// - month: u32
-/// - day: u32
+/// ### Arguments
+/// - year: `i32`
+/// - month: `u32`
+/// - day: `u32`
 ///
-/// # Returns
-/// - NaiveDate
+/// ### Returns
+/// - `NaiveDate`
 pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
     match NaiveDate::from_ymd_opt(year, month, day) {
         Some(date) => date,
@@ -32,10 +31,10 @@ pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
 
 /// Get the days since today for each occurrence for each event.
 ///
-/// # Arguments
+/// ### Arguments
 /// - events - `&[EventOccurrence]`
 ///
-/// # Returns
+/// ### Returns
 /// - `HashMap<String, Vec<i32>>`
 pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
     let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
@@ -147,6 +146,27 @@ pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32>
 ///
 /// ### Returns
 /// - `Vec<EventOccurrence>`
+///
+/// ### Example
+/// ```
+/// # use std::collections::HashMap;
+/// # use since_when_lib::utils::sort_events;
+/// let mut events = HashMap::new();
+/// let times_0 = vec![4, 11, 22, 33, 44];
+/// let times_1 = vec![1, 6, 11, 16, 21];
+/// events.entry("foo".to_string()).or_insert(times_0);
+/// events.entry("bar".to_string()).or_insert(times_1);
+///
+/// let mut averages = HashMap::new();
+/// averages.entry("foo".to_string()).or_insert(22);
+/// averages.entry("bar".to_string()).or_insert(11);
+///
+/// let mut expected = Vec::new();
+/// expected.push(("bar".to_string(), 1, 11));
+/// expected.push(("foo".to_string(), 4, 22));
+///
+/// assert_eq!(sort_events(&events, &averages), expected);
+/// ```
 pub fn sort_events(
     events: &HashMap<String, Vec<i32>>,
     averages: &HashMap<String, i32>,
@@ -163,6 +183,10 @@ pub fn sort_events(
     sorted_events
 }
 
+/// Get the event details.
+///
+/// ### Returns
+/// - `Vec<(String, i32, i32)>` - A vector of tuples containing the event name, days since, and average elapsed days.
 pub fn event_details() -> Vec<(String, i32, i32)> {
     // Open the data_base.
     let conn = database::setup_connection();
@@ -186,12 +210,12 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
 
 /// Make a new button.
 ///
-/// # Arguments
+/// ### Arguments
 /// - message: `AppMessage` - The message to send when the button is pressed.
 /// - label: `&str` - The label to display on the button.
 ///
-/// # Returns
-/// - Button<'a, AppMessage, Renderer> - The button.
+/// ### Returns
+/// - `Button<'a, AppMessage, Renderer>` - The button.
 pub fn new_button<'a>(
     message: AppMessage,
     label: &str,

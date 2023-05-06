@@ -1,8 +1,9 @@
-use crate::{app::AppMessage, settings::Settings, utils};
 use iced::alignment::Horizontal;
 use iced::widget::{row, text, vertical_space, Column, Text};
 use iced::Alignment;
 use iced::Element;
+
+use crate::{app::AppMessage, settings::Settings, utils};
 
 /// Event state.
 #[derive(Debug, Clone)]
@@ -15,7 +16,7 @@ pub struct EventOccurrence {
 #[derive(Debug, Clone)]
 pub struct EventsPage {}
 
-// Default EventsPage implementation.
+/// Default EventsPage implementation.
 impl Default for EventsPage {
     fn default() -> Self {
         EventsPage::new()
@@ -50,9 +51,6 @@ impl<'a> EventsPage {
 
     /// Create the event columns.
     ///
-    /// ### Arguments
-    /// - event_details: `Vec<(String, i32, i32)>` - The event name, days since, average.
-    ///
     /// ### Returns
     /// - (`Column<'a, AppMessage>`, `Column<'a, AppMessage>`, `Column<'a, AppMessage>`, u16)
     /// - The event column, date column, average column, and number of events.
@@ -65,7 +63,7 @@ impl<'a> EventsPage {
         let settings = Settings::new();
         // Create the columns.
         let mut event_column = Self::make_column("Event");
-        let mut date_column = Self::make_column("Days  Since");
+        let mut days_since_column = Self::make_column("Days  Since");
         let mut avg_column = Self::make_column("Avg");
         // Create the event rows.
         // event_details is a vector of tuples (event_name, days_since, average).
@@ -82,7 +80,7 @@ impl<'a> EventsPage {
             let plural = if days_since != 1 { "s" } else { "" };
             let days_since_text =
                 Text::new(format!("{} day{} ago", days_since, plural)).size(settings.text_size());
-            date_column = date_column.push(days_since_text);
+            days_since_column = days_since_column.push(days_since_text);
             // Text for the average.
             if event.2 != 0 {
                 let plural = if event.2 > 1 { "s" } else { "" };
@@ -94,7 +92,7 @@ impl<'a> EventsPage {
                 avg_column = avg_column.push(average_text);
             }
         }
-        (event_column, date_column, avg_column, num_events)
+        (event_column, days_since_column, avg_column, num_events)
     }
 
     /// View the events page.
@@ -107,9 +105,9 @@ impl<'a> EventsPage {
     pub fn view(&self) -> Element<'a, AppMessage> {
         let settings = Settings::new();
         // Get the event details and create the columns.
-        let (event_column, date_column, avg_column, num_events) = Self::event_columns();
+        let (event_column, days_since_column, avg_column, num_events) = Self::event_columns();
         // Align the columns into a row.
-        let event_row = row![event_column, date_column, avg_column]
+        let event_row = row![event_column, days_since_column, avg_column]
             .spacing(settings.spacing())
             .align_items(Alignment::Center);
         // Button for adding/updating events.

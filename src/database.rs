@@ -221,3 +221,118 @@ pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     };
     id
 }
+
+/// Add an event to the data_base.
+///
+/// ### Arguments
+/// - event: `&str` - The name of the event to add.
+/// - date: `&str` - The date of the occurrence to add.
+///
+/// ### Returns
+/// - `()`
+pub fn add_event(event: &str, date: &str) {
+    let conn = setup_connection();
+    match sql_insert(
+        &conn,
+        (0, false),
+        ("", false),
+        (event, true),
+        "INSERT INTO events (name) VALUES (?1);",
+    ) {
+        Ok(_) => {
+            info!("Event added: {:?}", event);
+            let id = get_event_id(&conn, event);
+            // Add the occurrence to the data_base.
+            match sql_insert(
+                &conn,
+                (id, true),
+                (date, true),
+                ("", false),
+                "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
+            ) {
+                Ok(_) => {
+                    info!("Occurrence added: {}, {}", event, date);
+                }
+                Err(e) => {
+                    error!("Error: {:?}", e);
+                }
+            };
+        }
+        // If the event already exists, do not add the occurrence.
+        Err(e) => {
+            error!("Error: {:?}", e);
+        }
+    }
+}
+
+/// Delete an event from the data_base.
+///
+/// ### Arguments
+/// - event: `&str` - The name of the event to delete.
+
+/// ### Returns
+/// - `()`
+pub fn delete_event(event: &str) {
+    let conn = setup_connection();
+    let id = get_event_id(&conn, event);
+    // Delete occurrence.
+    match sql_insert(
+        &conn,
+        (id, true),
+        ("", false),
+        ("", false),
+        "DELETE FROM occurrences WHERE event_id = ?1;",
+    ) {
+        Ok(_) => {
+            info!("Occurrences deleted.");
+            // Delete event.
+            match sql_insert(
+                &conn,
+                (0, false),
+                ("", false),
+                (event, true),
+                "DELETE FROM events WHERE name = ?1;",
+            ) {
+                Ok(_) => {
+                    info!("Event deleted: {}", event);
+                }
+                Err(e) => {
+                    error!("Error: {:?}", e);
+                }
+            }
+            id
+        }
+        Err(e) => {
+            error!("Error: {:?}", e);
+            0
+        }
+    };
+}
+
+/// Update an event in the data_base.
+///
+/// ### Arguments
+/// - event: `&str` - The name of the event to update.
+/// - date: `&str` - The date of the occurrence to update.
+///
+/// ### Returns
+/// - `()`
+pub fn update_event(event: &str, date: &str) {
+    let conn = setup_connection();
+    let id = get_event_id(&conn, event);
+    // Add the occurrence to the data_base.
+    match sql_insert(
+        &conn,
+        (id, true),
+        (date, true),
+        ("", false),
+        "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
+    ) {
+        Ok(_) => {
+            info!("Occurrence added: {} on {}", event, date);
+        }
+        Err(e) => {
+            error!("Error: {:?}", e);
+        }
+    };
+}

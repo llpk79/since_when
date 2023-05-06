@@ -45,10 +45,10 @@ impl Application for SinceWhen {
 
     /// Creates a new app.
     ///
-    /// # Arguments
+    /// ### Arguments
     /// - flags: `()`
     ///
-    /// # Returns
+    /// ### Returns
     /// - `(Self, Command<AppMessage>)`
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
         let conn = database::setup_connection();
@@ -70,7 +70,7 @@ impl Application for SinceWhen {
 
     /// The title of the application.
     ///
-    /// # Returns
+    /// ### Returns
     /// - String
     fn title(&self) -> String {
         String::from("Since When?")
@@ -78,10 +78,10 @@ impl Application for SinceWhen {
 
     /// The update function.
     ///
-    /// # Arguments
+    /// ### Arguments
     /// - message: `AppMessage`
     ///
-    /// # Returns
+    /// ### Returns
     /// - `Command<AppMessage>`
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
@@ -135,7 +135,7 @@ impl Application for SinceWhen {
 
     /// The view function.
     ///
-    /// # Returns
+    /// ### Returns
     /// - `Element<'static, Self::Message>`
     fn view(&self) -> Element<'static, Self::Message> {
         let content = match self.current_page {
@@ -153,7 +153,7 @@ impl Application for SinceWhen {
 
     /// The application theme.
     ///
-    /// # Returns
+    /// ### Returns
     /// - `Self::Theme`
     fn theme(&self) -> Self::Theme {
         Theme::Dark
