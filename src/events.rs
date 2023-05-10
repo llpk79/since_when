@@ -32,10 +32,10 @@ impl<'a> EventsPage {
     /// Create columns with header for events page.
     ///
     /// ### Arguments
-    /// - label: `&str`
+    /// - label: `&str` - The label for the column.
     ///
     /// ### Returns
-    /// - `Column<AppMessage>`
+    /// - `Column<AppMessage>` - The column with header.
     fn make_column(label: &str) -> Column<AppMessage> {
         let settings = Settings::new();
         let mut column = Column::new()
@@ -101,7 +101,7 @@ impl<'a> EventsPage {
     /// - `&self`
     ///
     /// ### Returns
-    /// - `Element<'a, AppMessage>`
+    /// - `Element<'a, AppMessage>` - The events page.
     pub fn view(&self) -> Element<'a, AppMessage> {
         let settings = Settings::new();
         // Get the event details and create the columns.

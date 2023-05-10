@@ -37,10 +37,10 @@ impl<'a> Calendar {
     /// Updates the Calendar State via messages.
     ///
     /// ### Arguments
-    /// - message - `AppMessage`
+    /// - message - `AppMessage` - The message to process.
     ///
     /// ### Returns
-    /// - `Command<AppMessage>`
+    /// - `Command<AppMessage>` - The command to execute.
     pub fn update(&mut self, message: AppMessage) -> Command<AppMessage> {
         match message {
             AppMessage::PreviousMonth => {
@@ -73,7 +73,7 @@ impl<'a> Calendar {
     /// Instructions for the Calendar window.
     ///
     /// ### Returns
-    /// - `Row<'a, AppMessage, Renderer>`
+    /// - `Row<'a, AppMessage, Renderer>` - The instructions row.
     fn instruction_row(self) -> Row<'a, AppMessage, Renderer> {
         // Text to explain what to do.
         let settings = Settings::new();
@@ -89,7 +89,7 @@ impl<'a> Calendar {
     /// Creates a row with the current month and year, prev and next month buttons.
     ///
     /// ### Returns
-    /// - `Row<'a, AppMessage, Renderer>`
+    /// - `Row<'a, AppMessage, Renderer>` - The navigation row.
     fn nav_row(self) -> Row<'a, AppMessage, Renderer> {
         let settings = Settings::new();
         let prev_button = new_button(AppMessage::PreviousMonth, "<", settings.text_size());
@@ -109,7 +109,7 @@ impl<'a> Calendar {
     /// Creates the Calendar view.
     ///
     /// ### Returns
-    /// - `Column<'a, AppMessage, Renderer>`
+    /// - `Column<'a, AppMessage, Renderer>` - The Calendar view.
     fn calendar(self) -> Column<'a, AppMessage, Renderer> {
         let settings = Settings::new();
         // Create a column to hold the Calendar.
@@ -158,7 +158,7 @@ impl<'a> Calendar {
     /// The Calendar is a 7 x 6 grid of day buttons.
     ///
     /// ### Returns
-    /// - `Element<'a, AppMessage>`
+    /// - `Element<'a, AppMessage>` - The Calendar page.
     pub fn view(self) -> Element<'a, AppMessage> {
         let settings = Settings::new();
         // Create a column to hold the calendar, nav buttons, and instructions.

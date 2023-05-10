@@ -46,10 +46,10 @@ impl Application for SinceWhen {
     /// Creates a new app.
     ///
     /// ### Arguments
-    /// - flags: `()`
+    /// - flags: `()` - No flags are needed.
     ///
     /// ### Returns
-    /// - `(Self, Command<AppMessage>)`
+    /// - `(Self, Command<AppMessage>)` - The app and the command to execute.
     fn new(_flags: ()) -> (Self, Command<AppMessage>) {
         let conn = database::setup_connection();
         database::setup_tables(&conn);
@@ -79,10 +79,10 @@ impl Application for SinceWhen {
     /// The update function.
     ///
     /// ### Arguments
-    /// - message: `AppMessage`
+    /// - message: `AppMessage` - The message to process.
     ///
     /// ### Returns
-    /// - `Command<AppMessage>`
+    /// - `Command<AppMessage>` - The command to execute.
     fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
         match message {
             AppMessage::NextMonth => {

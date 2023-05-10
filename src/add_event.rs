@@ -41,13 +41,13 @@ impl<'a> AddEvent {
 
     /// Add, Update or Delete Events.
     ///
-    /// # Arguments
+    /// ### Arguments
     /// - message: `AppMessage` - The message to process.
     /// - day: `u32` - The day of the date to add.
     /// - month: `u32` - The month of the date to add.
     /// - year: `i32` - The year of the date to add.
     ///
-    /// # Returns
+    /// ### Returns
     /// - `Command<AppMessage>` - The command to execute.
     pub fn update(
         &mut self,
@@ -87,13 +87,13 @@ impl<'a> AddEvent {
 
     /// View for AddEvent.
     ///
-    /// # Arguments
+    /// ### Arguments
     /// - day: `u32` - The day of the date to display.
     /// - month: `u32` - The month of the date to display.
     /// - year: `i32` - The year of the date to display.
     ///
-    /// # Returns
-    /// - `Element<'a, AppMessage>` - The view.
+    /// ### Returns
+    /// - `Element<'a, AppMessage>` - The AddEvent page.
     pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
         let settings = Settings::new();
         // Date and event input.

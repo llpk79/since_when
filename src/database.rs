@@ -1,11 +1,11 @@
 use crate::events::EventOccurrence;
 use log::{error, info};
-use rusqlite::{params, Connection, Result};
+use rusqlite::{params, Connection, Result, Statement};
 
 /// Setup rusqlite connection.
 ///
-/// # Returns
-/// - `rusqlite::Connection`
+/// ### Returns
+/// - `Connection` - The connection to the data_base.
 pub fn setup_connection() -> Connection {
     match Connection::open("since_when.db") {
         Ok(conn) => conn,
@@ -17,13 +17,13 @@ pub fn setup_connection() -> Connection {
 
 /// Prepare a SQL statement.
 ///
-/// # Arguments
-/// - conn: `&Connection`
-/// - stmt: `&str`
+/// ### Arguments
+/// - conn: `&'a Connection` - The connection to the data_base.
+/// - stmt: `&'a str` - The SQL statement to prepare.
 ///
-/// # Returns
-/// - `rusqlite::Statement`
-pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statement<'a> {
+/// ### Returns
+/// - `Statement<'a>`
+pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> Statement<'a> {
     match conn.prepare(stmt) {
         Ok(statement) => statement,
         Err(e) => {
@@ -34,10 +34,10 @@ pub fn prepare_stmt<'a>(conn: &'a Connection, stmt: &'a str) -> rusqlite::Statem
 
 /// Setup the data_base tables.
 ///
-/// # Arguments
-/// - `&Connection`
+/// ### Arguments
+/// - `&Connection` - The connection to the data_base.
 ///
-/// # Returns
+/// ### Returns
 /// - `()`
 pub fn setup_tables(conn: &Connection) {
     match conn.execute(
@@ -73,10 +73,10 @@ pub fn setup_tables(conn: &Connection) {
 
 /// Insert test data into the data_base.
 ///
-/// # Arguments
-/// - `&Connection`
+/// ### Arguments
+/// - `&Connection` - The connection to the data_base.
 ///
-/// # Returns
+/// ### Returns
 /// - `()`
 pub fn insert_test_event(conn: &Connection) {
     match conn.execute(
@@ -109,11 +109,11 @@ pub fn insert_test_event(conn: &Connection) {
 
 /// Get events and occurrences from the data_base.
 ///
-/// # Arguments
-/// - conn - `&Connection`
+/// ### Arguments
+/// - conn - `&Connection` - The connection to the data_base.
 ///
-/// # Returns
-/// - `Result<Vec<EventOccurrence>>`
+/// ### Returns
+/// - `Result<Vec<EventOccurrence>>` - The event occurrences.
 pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     info!("Retrieving Records.");
     // Get all events and occurrences.
@@ -151,7 +151,7 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
 /// Perform a SQL insert with variable parameters.
 ///
 /// ### Arguments
-/// - conn: `&rusqlite::Connection` - The data_base connection.
+/// - conn: `&Connection` - The data_base connection.
 /// - id: `(i32, bool)` - The id of the event to insert.
 /// - date: `(&str, bool)` - The date of the occurrence to insert.
 /// - event: `(&str, bool)` - The name of the event to insert.
@@ -201,10 +201,11 @@ pub fn sql_insert(
 
 /// Get the id of the event.
 ///
-/// # Arguments
-/// - conn: `&rusqlite::Connection` - The data_base connection.
+/// ### Arguments
+/// - conn: `&Connection` - The data_base connection.
+/// - event: `&str` - The name of the event.
 ///
-/// # Returns
+/// ### Returns
 /// - id: `i32` - The id of the event.
 pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     struct ID {
@@ -269,7 +270,7 @@ pub fn add_event(event: &str, date: &str) {
 ///
 /// ### Arguments
 /// - event: `&str` - The name of the event to delete.
-
+///
 /// ### Returns
 /// - `()`
 pub fn delete_event(event: &str) {

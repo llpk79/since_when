@@ -7,7 +7,7 @@ use iced::{theme, Renderer};
 use log::error;
 
 use crate::app::AppMessage;
-use crate::database;
+use crate::database::{setup_connection, get_events};
 use crate::events::EventOccurrence;
 use crate::settings::Settings;
 
@@ -32,10 +32,10 @@ pub fn get_date(year: i32, month: u32, day: u32) -> NaiveDate {
 /// Get the days since today for each occurrence for each event.
 ///
 /// ### Arguments
-/// - events - `&[EventOccurrence]`
+/// - events - `&[EventOccurrence]` - The events to process.
 ///
 /// ### Returns
-/// - `HashMap<String, Vec<i32>>`
+/// - `HashMap<String, Vec<i32>>` - The days since today for each occurrence for each event.
 pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32>> {
     let mut days_since_now: HashMap<String, Vec<i32>> = HashMap::new();
     let now = chrono::Local::now().naive_local().date();
@@ -68,10 +68,10 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// Get the elapsed days between each occurrence for each event.
 ///
 /// ### Arguments
-/// - days_since - `&HashMap<String, Vec<i32>>`
+/// - days_since - `&HashMap<String, Vec<i32>>` - The days since today for each occurrence for each event.
 ///
 /// ### Returns
-/// - `HashMap<String, Vec<i32>>`
+/// - `HashMap<String, Vec<i32>>` - The elapsed days between each occurrence for each event.
 ///
 /// ### Example
 /// ```
@@ -109,10 +109,10 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// Get the average elapsed days between occurrences for each event.
 ///
 /// ### Arguments
-/// elapsed - `HashMap<String, Vec<i32>>`
+/// elapsed - `&HashMap<String, Vec<i32>>` - The elapsed days between occurrences for each event.
 ///
 /// ### Returns
-/// `HashMap<String, i32>`
+/// `HashMap<String, i32>` - The average elapsed days between occurrences for each event.
 ///
 /// ### Example
 /// ```
@@ -142,10 +142,11 @@ pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32>
 /// Sort events by days since now.
 ///
 /// ### Arguments
-/// - events - `&[EventOccurrence]`
+/// - events - `&HashMap<String, Vec<i32>>` - The days since now for each event.
+/// - averages - `&HashMap<String, i32>` - The average elapsed days between occurrences for each event.
 ///
 /// ### Returns
-/// - `Vec<EventOccurrence>`
+/// - `(String, i32, i32)` - (event_name, days_since, average)
 ///
 /// ### Example
 /// ```
@@ -183,15 +184,15 @@ pub fn sort_events(
     sorted_events
 }
 
-/// Get the event details.
+/// Get the event details sorted by days since.
 ///
 /// ### Returns
 /// - `Vec<(String, i32, i32)>` - A vector of tuples containing the event name, days since, and average elapsed days.
 pub fn event_details() -> Vec<(String, i32, i32)> {
     // Open the data_base.
-    let conn = database::setup_connection();
+    let conn = setup_connection();
     // Get the events.
-    let events = match database::get_events(&conn) {
+    let events = match get_events(&conn) {
         Ok(events) => events,
         Err(e) => {
             error!("Error: {}", e);
@@ -213,6 +214,7 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
 /// ### Arguments
 /// - message: `AppMessage` - The message to send when the button is pressed.
 /// - label: `&str` - The label to display on the button.
+/// - width: `u16` - The width of the button.
 ///
 /// ### Returns
 /// - `Button<'a, AppMessage, Renderer>` - The button.
@@ -222,15 +224,14 @@ pub fn new_button<'a>(
     width: u16,
 ) -> Button<'a, AppMessage, Renderer> {
     let settings = Settings::new();
-    let new_button: Button<'a, AppMessage, Renderer> = button(
+    button(
         text(label)
             .size(settings.text_size())
             .horizontal_alignment(Horizontal::Center),
     )
     .width(width)
     .style(theme::Button::Secondary)
-    .on_press(message);
-    new_button
+    .on_press(message)
 }
 
 /// Creates a new row.
