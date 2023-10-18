@@ -57,7 +57,9 @@ pub fn setup_tables(conn: &Connection) {
     match conn.execute(
         "CREATE TABLE IF NOT EXISTS occurrences (
               event_id        INTEGER,
-              date            TEXT NOT NULL,
+              year            INTEGER NOT NULL,
+              month           INTEGER NOT NULL,
+              day             INTEGER NOT NULL,
               FOREIGN KEY(event_id) REFERENCES events(id)
               );",
         params![],
@@ -87,16 +89,24 @@ pub fn insert_test_event(conn: &Connection) {
             info!("Record inserted: {}", inserted);
             // Insert test occurrence.
             match conn.execute(
-            "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2), (?3, ?4), (?5, ?6), (?7, ?8);",
+            "INSERT INTO occurrences (event_id, year, month, day) VALUES (?1, ?2, ?3, ?4), (?5, ?6, ?7, ?8), (?9, ?10, ?11, ?12), (?13, ?14, ?15, ?16);",
             params![
                 1i32,
-                "2023-04-01".to_string(),
+                2023i32,
+                4i32,
+                1i32,
                 2i32,
-                "2023-04-12".to_string(),
+                2023i32,
+                4i32,
+                12i32,
                 1i32,
-                "2023-04-06".to_string(),
+                2023i32,
+                4i32,
+                6i32,
                 1i32,
-                "2023-04-11".to_string(),
+                2023i32,
+                4i32,
+                11i32,
             ],
         ) {
             Ok(inserted) => info!("Record inserted: {}", inserted),
@@ -120,16 +130,18 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     let mut stmt = prepare_stmt(
         conn,
         "\
-    SELECT name, date \
+    SELECT name, year, month, day \
     FROM events \
     JOIN occurrences \
     ON events.id = occurrences.event_id \
-    ORDER BY date DESC;",
+    ORDER BY year, month, day DESC;",
     );
     let event_iter = stmt.query_map([], |row| {
         Ok(EventOccurrence {
             name: row.get(0)?,
-            date: row.get(1)?,
+            year: row.get(1)?,
+            month: row.get(2)?,
+            day: row.get(3)?,
         })
     })?;
     let mut events = Vec::new();
@@ -140,7 +152,9 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
                 error!("Error retrieving record: {}", e);
                 EventOccurrence {
                     name: "".to_string(),
-                    date: "".to_string(),
+                    year: 0,
+                    month: 0,
+                    day: 0,
                 }
             }
         });
@@ -163,15 +177,15 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
 pub fn sql_insert(
     conn: &Connection,
     id: (i32, bool),
-    date: (&str, bool),
+    date: (i32, u32, u32, bool),
     event: (&str, bool),
     sql: &str,
 ) -> Result<i32, rusqlite::Error> {
     let mut stmt = prepare_stmt(conn, sql);
     // Match on the flags to determine which parameters to use.
-    match (id.1, date.1, event.1) {
+    match (id.1, date.3, event.1) {
         // Update event with a new occurrence.
-        (true, true, false) => match stmt.execute(params![id.0, date.0]) {
+        (true, true, false) => match stmt.execute(params![id.0, date.0, date.1, date.2]) {
             Ok(success) => success,
             Err(e) => {
                 error!("Error: {:?}", e);
@@ -231,12 +245,12 @@ pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
 ///
 /// ### Returns
 /// - `()`
-pub fn add_event(event: &str, date: &str) {
+pub fn add_event(event: &str, year: i32, month: u32, day: u32) {
     let conn = setup_connection();
     match sql_insert(
         &conn,
         (0, false),
-        ("", false),
+        (year, month, day, false),
         (event, true),
         "INSERT INTO events (name) VALUES (?1);",
     ) {
@@ -247,12 +261,12 @@ pub fn add_event(event: &str, date: &str) {
             match sql_insert(
                 &conn,
                 (id, true),
-                (date, true),
+                (year, month, day, true),
                 ("", false),
-                "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
+                "INSERT INTO occurrences (event_id, year, month, day) VALUES (?1, ?2, ?3, ?4);",
             ) {
                 Ok(_) => {
-                    info!("Occurrence added: {}, {}", event, date);
+                    info!("Occurrence added: {}, {}-{}-{}", event, year, month, day);
                 }
                 Err(e) => {
                     error!("Error: {:?}", e);
@@ -280,7 +294,7 @@ pub fn delete_event(event: &str) {
     match sql_insert(
         &conn,
         (id, true),
-        ("", false),
+        (0, 0, 0, false),
         ("", false),
         "DELETE FROM occurrences WHERE event_id = ?1;",
     ) {
@@ -290,7 +304,7 @@ pub fn delete_event(event: &str) {
             match sql_insert(
                 &conn,
                 (0, false),
-                ("", false),
+                (0, 0, 0, false),
                 (event, true),
                 "DELETE FROM events WHERE name = ?1;",
             ) {
@@ -318,22 +332,28 @@ pub fn delete_event(event: &str) {
 ///
 /// ### Returns
 /// - `()`
-pub fn update_event(event: &str, date: &str) {
+pub fn update_event(event: &str, year: i32, month: u32, day: u32) {
     let conn = setup_connection();
     let id = get_event_id(&conn, event);
     // Add the occurrence to the data_base.
     match sql_insert(
         &conn,
         (id, true),
-        (date, true),
+        (year, month, day, true),
         ("", false),
-        "INSERT INTO occurrences (event_id, date) VALUES (?1, ?2);",
+        "INSERT INTO occurrences (event_id, year, month, day) VALUES (?1, ?2, ?3, ?4);",
     ) {
         Ok(_) => {
-            info!("Occurrence added: {} on {}", event, date);
+            info!("Occurrence added: {} on {}-{}-{}", event, year, month, day);
         }
         Err(e) => {
             error!("Error: {:?}", e);
         }
     };
 }
+
+// Get names and days of events in a given month.
+// pub fn get_event_by_month(month: u32) -> HashMap<str, Vec<i32>> {
+//     let conn:Connection = setup_connection();
+//
+// }

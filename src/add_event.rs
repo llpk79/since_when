@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{column, row, text, text_input};
 use iced::{Alignment, Command, Element};
@@ -14,7 +13,6 @@ use crate::{
 /// AddEvent state.
 #[derive(Debug, Clone)]
 pub struct AddEvent {
-    date: NaiveDate,
     event: String,
 }
 
@@ -29,12 +27,6 @@ impl Default for AddEvent {
 impl<'a> AddEvent {
     pub fn new() -> AddEvent {
         Self {
-            date: match NaiveDate::from_ymd_opt(1, 2, 3) {
-                Some(date) => date,
-                None => {
-                    panic!("Error creating date");
-                }
-            },
             event: String::new(),
         }
     }
@@ -56,19 +48,18 @@ impl<'a> AddEvent {
         month: u32,
         year: i32,
     ) -> Command<AppMessage> {
-        self.date = get_date(year, month, day);
         match message {
             AppMessage::AddEvent => {
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                add_event(&self.event, &self.date.to_string());
+                add_event(&self.event, year, month, day);
             }
             AppMessage::UpdateEvent => {
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                update_event(&self.event, &self.date.to_string());
+                update_event(&self.event, year, month, day);
             }
             AppMessage::DeleteEvent => {
                 if self.event.is_empty() {

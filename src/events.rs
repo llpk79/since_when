@@ -9,7 +9,9 @@ use crate::{app::AppMessage, settings::Settings, utils};
 #[derive(Debug, Clone)]
 pub struct EventOccurrence {
     pub name: String,
-    pub date: String,
+    pub year: i32,
+    pub month: u32,
+    pub day: u32
 }
 
 /// Events page struct.

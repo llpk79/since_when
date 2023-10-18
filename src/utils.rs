@@ -7,7 +7,7 @@ use iced::{theme, Renderer};
 use log::error;
 
 use crate::app::AppMessage;
-use crate::database::{setup_connection, get_events};
+use crate::database::{get_events, setup_connection};
 use crate::events::EventOccurrence;
 use crate::settings::Settings;
 
@@ -41,13 +41,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
     let now = chrono::Local::now().naive_local().date();
     for event in events.iter() {
         // Calculate the days between the events and the current date.
-        let date = match NaiveDate::parse_from_str(&event.date, "%Y-%m-%d") {
-            Ok(date) => date,
-            Err(_) => {
-                error!("Error parsing date");
-                continue;
-            }
-        };
+        let date = get_date(event.year, event.month, event.day);
         let days = now.signed_duration_since(date).num_days() as i32;
         if days_since_now.contains_key(&event.name) {
             let days_vec = match days_since_now.get_mut(&event.name) {
