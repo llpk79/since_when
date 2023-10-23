@@ -4,9 +4,11 @@ use iced::theme::Button::Secondary;
 use iced::widget::{button, row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
+use std::collections::HashMap;
 
 use crate::{
     app::AppMessage,
+    database::events_by_year_month,
     settings::Settings,
     utils::{get_date, last_day_of_month, make_new_row, new_button},
 };
@@ -130,21 +132,32 @@ impl<'a> Calendar {
         let offset = from_sun - 1;
         // Variables to hold the current day and the day to display.
         let mut day: u32;
-        let mut print_day: text::Text<_>;
-        // Iterate through the days of the month.
+        let mut print_day: String;
+        let current_events = match events_by_year_month(self.year, self.month) {
+            Ok(current_events) => current_events,
+            Err(_) => HashMap::new(),
+        };
+        // Iterate through the 6x7 calendar grid.
         for i in 0..42 {
             // If the current day is between the first day of the month and the last day of the month, display the day.
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
-                print_day = text(format!("{}", day))
+                print_day = format!("{}", day)
             // Otherwise, display a blank space.
             } else {
                 day = 0;
-                print_day = text(" ".to_string())
+                print_day = " ".to_string()
+            };
+            if current_events.contains_key(&day) {
+                if let Some(event_vec) = current_events.get(&day) {
+                    for event in event_vec {
+                        print_day = print_day + "\n" + event;
+                    }
+                }
             };
             calendar_row = calendar_row.push(
                 button(
-                    print_day
+                    text(print_day)
                         .vertical_alignment(Vertical::Top)
                         .horizontal_alignment(Horizontal::Left)
                         .size(15),
