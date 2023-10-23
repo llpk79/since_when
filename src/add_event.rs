@@ -100,17 +100,17 @@ impl<'a> AddEvent {
         // Action buttons.
         let add_button = new_button(
             AppMessage::AddEvent,
-            "Add Event",
+            text("Add Event"),
             settings.add_button_size(),
         );
         let update_button = new_button(
             AppMessage::UpdateEvent,
-            "Update Event",
+            text("Update Event"),
             settings.add_button_size(),
         );
         let delete_button = new_button(
             AppMessage::DeleteEvent,
-            "Delete Event",
+            text("Delete Event"),
             settings.add_button_size(),
         );
         let action_row = row![add_button, update_button, delete_button]
@@ -119,12 +119,12 @@ impl<'a> AddEvent {
         // Navigation buttons.
         let event_button = new_button(
             AppMessage::EventsWindow,
-            "Events",
+            text("Events"),
             settings.add_button_size(),
         );
         let calendar_button = new_button(
             AppMessage::CalendarWindow,
-            "Calendar",
+            text("Calendar"),
             settings.add_button_size(),
         );
         let nav_row = row![calendar_button, event_button]
