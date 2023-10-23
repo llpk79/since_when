@@ -17,11 +17,11 @@ impl Default for Settings {
 impl Settings {
     pub fn new() -> Self {
         Self {
-            text_size: 40,
-            add_button_size: 250,
+            text_size: 20,
+            add_button_size: 150,
             spacing: 20,
             calendar_text_size: 40,
-            calendar_width: 60,
+            calendar_width: 75,
             padding: 5,
         }
     }
