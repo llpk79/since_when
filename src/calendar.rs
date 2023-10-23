@@ -1,6 +1,7 @@
 use chrono::Datelike;
-use iced::alignment::Vertical;
-use iced::widget::{row, text, Column, Row};
+use iced::alignment::{Horizontal, Vertical};
+use iced::theme::Button::Secondary;
+use iced::widget::{button, row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
 
@@ -98,12 +99,15 @@ impl<'a> Calendar {
             Some(month) => month,
             None => panic!("Invalid month"),
         };
-        let text_month = text(format!("{:?} - {}", month, self.year)).size(settings.text_size());
+        let text_month = text(format!("{:?} - {}", month, self.year))
+            .size(settings.text_size())
+            .horizontal_alignment(Horizontal::Center)
+            .width(160);
         let next_button = new_button(AppMessage::NextMonth, text(">"), settings.text_size());
         // Return a row with the prev and next month buttons and the current month and year.
         row![prev_button, text_month, next_button]
             .spacing(settings.spacing())
-            .align_items(Vertical::Top.into())
+            .align_items(Vertical::Center.into())
     }
 
     /// Creates the Calendar view.
@@ -138,11 +142,18 @@ impl<'a> Calendar {
                 day = 0;
                 print_day = text(" ".to_string())
             };
-            calendar_row = calendar_row.push(new_button(
-                AppMessage::DayClicked(day, self.month, self.year),
-                print_day,
-                settings.calendar_width(),
-            ));
+            calendar_row = calendar_row.push(
+                button(
+                    print_day
+                        .vertical_alignment(Vertical::Top)
+                        .horizontal_alignment(Horizontal::Left)
+                        .size(15),
+                )
+                .on_press(AppMessage::DayClicked(day, self.month, self.year))
+                .style(Secondary)
+                .width(settings.calendar_width())
+                .height(settings.calendar_width()),
+            );
             // If the current day is a Saturday, push the current row and start a new week.
             if (i + 1) % 7 == 0 {
                 calendar = calendar.push(calendar_row);
