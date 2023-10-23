@@ -18,7 +18,7 @@ impl Settings {
     pub fn new() -> Self {
         Self {
             text_size: 40,
-            add_button_size: 225,
+            add_button_size: 250,
             spacing: 20,
             calendar_text_size: 40,
             calendar_width: 60,

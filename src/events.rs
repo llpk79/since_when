@@ -9,7 +9,9 @@ use crate::{app::AppMessage, settings::Settings, utils};
 #[derive(Debug, Clone)]
 pub struct EventOccurrence {
     pub name: String,
-    pub date: String,
+    pub year: i32,
+    pub month: u32,
+    pub day: u32,
 }
 
 /// Events page struct.
@@ -113,7 +115,7 @@ impl<'a> EventsPage {
         // Button for adding/updating events.
         let calendar_button = utils::new_button(
             AppMessage::CalendarWindow,
-            "Add/Update Event",
+            text("Add/Update Event"),
             settings.add_button_size() + 100,
         );
         // Arrange the content.

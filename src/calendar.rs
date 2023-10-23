@@ -7,7 +7,7 @@ use num_traits::cast::FromPrimitive;
 use crate::{
     app::AppMessage,
     settings::Settings,
-    utils::{get_date, make_new_row, new_button},
+    utils::{get_date, last_day_of_month, make_new_row, new_button},
 };
 
 /// The state of the Calendar.
@@ -92,14 +92,14 @@ impl<'a> Calendar {
     /// - `Row<'a, AppMessage, Renderer>` - The navigation row.
     fn nav_row(self) -> Row<'a, AppMessage, Renderer> {
         let settings = Settings::new();
-        let prev_button = new_button(AppMessage::PreviousMonth, "<", settings.text_size());
+        let prev_button = new_button(AppMessage::PreviousMonth, text("<"), settings.text_size());
         // Display the current month and year.
         let month = match chrono::Month::from_u32(self.month) {
             Some(month) => month,
             None => panic!("Invalid month"),
         };
         let text_month = text(format!("{:?} - {}", month, self.year)).size(settings.text_size());
-        let next_button = new_button(AppMessage::NextMonth, ">", settings.text_size());
+        let next_button = new_button(AppMessage::NextMonth, text(">"), settings.text_size());
         // Return a row with the prev and next month buttons and the current month and year.
         row![prev_button, text_month, next_button]
             .spacing(settings.spacing())
@@ -119,31 +119,31 @@ impl<'a> Calendar {
         let mut calendar_row = make_new_row();
         // Get the weekday of the first day of the month to determine where to start the Calendar.
         let first_day = get_date(self.year, self.month, 1);
+        let last_day = last_day_of_month(self.year, self.month);
         let weekday = first_day.weekday();
         let from_sun = weekday.num_days_from_sunday() as i32;
         // Get the offset to start the Calendar.
         let offset = from_sun - 1;
         // Variables to hold the current day and the day to display.
         let mut day: u32;
-        let mut print_day: String;
-        let month_lengths = vec![31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        let mut print_day: text::Text<_>;
         // Iterate through the days of the month.
         for i in 0..42 {
             // If the current day is between the first day of the month and the last day of the month, display the day.
-            if (from_sun <= i) && (i < month_lengths[(self.month - 1) as usize] + from_sun) {
+            if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
-                print_day = format!("{}", day)
+                print_day = text(format!("{}", day))
             // Otherwise, display a blank space.
             } else {
                 day = 0;
-                print_day = " ".to_string()
+                print_day = text(" ".to_string())
             };
             calendar_row = calendar_row.push(new_button(
                 AppMessage::DayClicked(day, self.month, self.year),
-                &print_day,
+                print_day,
                 settings.calendar_width(),
             ));
-            // If the current day is a Saturday, start a new row.
+            // If the current day is a Saturday, push the current row and start a new week.
             if (i + 1) % 7 == 0 {
                 calendar = calendar.push(calendar_row);
                 calendar_row = make_new_row();
@@ -168,7 +168,7 @@ impl<'a> Calendar {
             .push(self.calendar())
             .push(new_button(
                 AppMessage::EventsWindow,
-                "Events",
+                text("Events"),
                 settings.add_button_size(),
             ))
             .spacing(settings.spacing())

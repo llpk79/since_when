@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use iced::alignment::Horizontal;
 use iced::widget::{column, row, text, text_input};
 use iced::{Alignment, Command, Element};
@@ -14,7 +13,6 @@ use crate::{
 /// AddEvent state.
 #[derive(Debug, Clone)]
 pub struct AddEvent {
-    date: NaiveDate,
     event: String,
 }
 
@@ -29,12 +27,6 @@ impl Default for AddEvent {
 impl<'a> AddEvent {
     pub fn new() -> AddEvent {
         Self {
-            date: match NaiveDate::from_ymd_opt(1, 2, 3) {
-                Some(date) => date,
-                None => {
-                    panic!("Error creating date");
-                }
-            },
             event: String::new(),
         }
     }
@@ -56,19 +48,18 @@ impl<'a> AddEvent {
         month: u32,
         year: i32,
     ) -> Command<AppMessage> {
-        self.date = get_date(year, month, day);
         match message {
             AppMessage::AddEvent => {
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                add_event(&self.event, &self.date.to_string());
+                add_event(&self.event, year, month, day);
             }
             AppMessage::UpdateEvent => {
                 if self.event.is_empty() {
                     return Command::none();
                 }
-                update_event(&self.event, &self.date.to_string());
+                update_event(&self.event, year, month, day);
             }
             AppMessage::DeleteEvent => {
                 if self.event.is_empty() {
@@ -109,17 +100,17 @@ impl<'a> AddEvent {
         // Action buttons.
         let add_button = new_button(
             AppMessage::AddEvent,
-            "Add Event",
+            text("Add Event"),
             settings.add_button_size(),
         );
         let update_button = new_button(
             AppMessage::UpdateEvent,
-            "Update Event",
+            text("Update Event"),
             settings.add_button_size(),
         );
         let delete_button = new_button(
             AppMessage::DeleteEvent,
-            "Delete Event",
+            text("Delete Event"),
             settings.add_button_size(),
         );
         let action_row = row![add_button, update_button, delete_button]
@@ -128,12 +119,12 @@ impl<'a> AddEvent {
         // Navigation buttons.
         let event_button = new_button(
             AppMessage::EventsWindow,
-            "Events",
+            text("Events"),
             settings.add_button_size(),
         );
         let calendar_button = new_button(
             AppMessage::CalendarWindow,
-            "Calendar",
+            text("Calendar"),
             settings.add_button_size(),
         );
         let nav_row = row![calendar_button, event_button]
