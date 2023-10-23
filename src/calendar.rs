@@ -1,5 +1,4 @@
 use chrono::Datelike;
-use iced::alignment::Horizontal;
 use iced::alignment::Vertical;
 use iced::widget::{row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
