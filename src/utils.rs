@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use chrono::NaiveDate;
 use iced::alignment::{Horizontal, Vertical};
-use iced::widget::{button, text, Button, Row};
-use iced::{theme, Renderer};
+use iced::widget::{button, Button, Row};
+use iced::{theme, Renderer, Theme};
 use log::error;
+use std::collections::HashMap;
 
 use crate::app::AppMessage;
 use crate::database::{get_events, setup_connection};
@@ -52,6 +51,7 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
                 }
             };
             days_vec.push(days);
+            days_vec.sort();
         } else {
             days_since_now.insert(event.name.clone(), vec![days]);
         };
@@ -212,14 +212,14 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
 ///
 /// ### Returns
 /// - `Button<'a, AppMessage, Renderer>` - The button.
-pub fn new_button<'a>(
+pub fn new_button(
     message: AppMessage,
-    label: &str,
+    label: iced::widget::text::Text<Renderer<Theme>>,
     width: u16,
-) -> Button<'a, AppMessage, Renderer> {
+) -> Button<AppMessage, Renderer> {
     let settings = Settings::new();
     button(
-        text(label)
+        label
             .size(settings.text_size())
             .horizontal_alignment(Horizontal::Center),
     )
@@ -237,4 +237,24 @@ pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
     Row::new()
         .spacing(settings.spacing())
         .align_items(Vertical::Top.into())
+}
+
+/// Find the last day of a month.
+///
+/// ### Returns
+///
+pub fn last_day_of_month(year: i32, month: u32) -> i32 {
+    get_date(
+        match month {
+            12 => year + 1,
+            _ => year,
+        },
+        match month {
+            12 => 1,
+            _ => month + 1,
+        },
+        1,
+    )
+    .signed_duration_since(get_date(year, month, 1))
+    .num_days() as i32
 }
