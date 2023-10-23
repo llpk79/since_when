@@ -1,6 +1,7 @@
 use crate::events::EventOccurrence;
 use log::{error, info};
 use rusqlite::{params, Connection, Result, Statement};
+use std::collections::HashMap;
 
 /// Setup rusqlite connection.
 ///
@@ -350,4 +351,57 @@ pub fn update_event(event: &str, year: i32, month: u32, day: u32) {
             error!("Error: {:?}", e);
         }
     };
+}
+
+/// Get events by year and month.
+///
+/// ### Returns
+/// - `Result<HashMap<i32, Vec<String>>>` `{day: [event,...]}`
+pub fn events_by_year_month(year: i32, month: u32) -> Result<HashMap<u32, Vec<String>>> {
+    let conn = setup_connection();
+    let mut stmt = prepare_stmt(
+        &conn,
+        "\
+        SELECT e.name, o.day \
+        FROM events e \
+        JOIN occurrences o \
+        ON e.id = o.event_id \
+        WHERE o.year = ? and o.month = ?;",
+    );
+    struct EventDay {
+        name: String,
+        day: u32,
+    }
+    let event_iter = stmt.query_map(params![year, month as i32], |row| {
+        Ok(EventDay {
+            name: row.get(0)?,
+            day: row.get(1)?,
+        })
+    })?;
+    let mut events_by_year_month: HashMap<u32, Vec<String>> = HashMap::new();
+    for event_result in event_iter {
+        let event = match event_result {
+            Ok(event) => event,
+            Err(e) => {
+                error!("Error getting record {}", e);
+                EventDay {
+                    name: "".to_string(),
+                    day: 0,
+                }
+            }
+        };
+        if events_by_year_month.contains_key(&event.day) {
+            let event_vec = match events_by_year_month.get_mut(&event.day) {
+                Some(event_vec) => event_vec,
+                None => {
+                    error!("Error getting event vector");
+                    continue;
+                }
+            };
+            event_vec.push(event.name);
+        } else {
+            events_by_year_month.insert(event.day.clone(), vec![event.name.clone()]);
+        }
+    }
+    Ok(events_by_year_month)
 }

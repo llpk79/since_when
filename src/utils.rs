@@ -1,7 +1,8 @@
 use chrono::NaiveDate;
 use iced::alignment::{Horizontal, Vertical};
+use iced::theme::Button::Secondary;
 use iced::widget::{button, text, Button, Row};
-use iced::{theme, Renderer};
+use iced::Renderer;
 use log::error;
 use std::collections::HashMap;
 
@@ -221,11 +222,13 @@ pub fn new_button(
     button(
         label
             .size(settings.text_size())
-            .horizontal_alignment(Horizontal::Center),
+            .horizontal_alignment(Horizontal::Center)
+            .vertical_alignment(Vertical::Top),
     )
     .width(width)
-    .style(theme::Button::Secondary)
+    .height(40)
     .on_press(message)
+    .style(Secondary)
 }
 
 /// Creates a new row.
