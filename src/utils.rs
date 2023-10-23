@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use iced::alignment::{Horizontal, Vertical};
-use iced::widget::{button, Button, Row};
-use iced::{theme, Renderer, Theme};
+use iced::widget::{button, text, Button, Row};
+use iced::{theme, Renderer};
 use log::error;
 use std::collections::HashMap;
 
@@ -214,7 +214,7 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
 /// - `Button<'a, AppMessage, Renderer>` - The button.
 pub fn new_button(
     message: AppMessage,
-    label: iced::widget::text::Text<Renderer<Theme>>,
+    label: text::Text,
     width: u16,
 ) -> Button<AppMessage, Renderer> {
     let settings = Settings::new();
@@ -242,7 +242,7 @@ pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
 /// Find the last day of a month.
 ///
 /// ### Returns
-///
+/// - `i32`
 pub fn last_day_of_month(year: i32, month: u32) -> i32 {
     get_date(
         match month {

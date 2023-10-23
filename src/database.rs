@@ -351,9 +351,3 @@ pub fn update_event(event: &str, year: i32, month: u32, day: u32) {
         }
     };
 }
-
-// Get names and days of events in a given month.
-// pub fn get_event_by_month(month: u32) -> HashMap<str, Vec<i32>> {
-//     let conn:Connection = setup_connection();
-//
-// }
