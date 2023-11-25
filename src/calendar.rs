@@ -144,7 +144,7 @@ impl<'a> Calendar {
                 day = (i - offset) as u32;
                 let day_of_week = get_date(self.year, self.month, day).weekday();
 
-                print_day = format!("{}  {}", day, day_of_week)
+                print_day = format!("{}    {}", day, day_of_week)
             // Otherwise, display a blank space.
             } else {
                 day = 0;
