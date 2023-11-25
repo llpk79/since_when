@@ -142,7 +142,9 @@ impl<'a> Calendar {
             // If the current day is between the first day of the month and the last day of the month, display the day.
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
-                print_day = format!("{}", day)
+                let day_of_week = get_date(self.year, self.month, day).weekday();
+
+                print_day = format!("{}  {}", day, day_of_week)
             // Otherwise, display a blank space.
             } else {
                 day = 0;
