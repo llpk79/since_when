@@ -133,10 +133,8 @@ impl<'a> Calendar {
         // Variables to hold the current day and the day to display.
         let mut day: u32;
         let mut print_day: String;
-        let current_events = match events_by_year_month(self.year, self.month) {
-            Ok(current_events) => current_events,
-            Err(_) => HashMap::new(),
-        };
+        let current_events =
+            events_by_year_month(self.year, self.month).unwrap_or_else(|_| HashMap::new());
         let today = Utc::now();
         let (today_day, today_month, today_year) = (today.day(), today.month(), today.year());
         // Iterate through the 6x7 calendar grid.
@@ -145,15 +143,15 @@ impl<'a> Calendar {
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
                 let day_of_week = get_date(self.year, self.month, day).weekday();
-                let spaces = if day > 10
+                let padding = if day > 10
                     || day_of_week.to_string().contains("M")
                     || day_of_week.to_string().contains("W")
                 {
                     "    "
                 } else {
                     "      "
-                }; // 6 and 5 spaces.
-                print_day = format!("{}{}{}", day, spaces, day_of_week)
+                }; // 4 and 6 spaces.
+                print_day = format!("{}{}{}", day, padding, day_of_week)
             // Otherwise, display a blank space.
             } else {
                 day = 0;
