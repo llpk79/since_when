@@ -1,6 +1,6 @@
-use chrono::Datelike;
+use chrono::{Datelike, Utc};
 use iced::alignment::{Horizontal, Vertical};
-use iced::theme::Button::Secondary;
+use iced::theme::Button::{Primary, Secondary};
 use iced::widget::{button, row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
@@ -137,14 +137,23 @@ impl<'a> Calendar {
             Ok(current_events) => current_events,
             Err(_) => HashMap::new(),
         };
+        let today = Utc::now();
+        let (today_day, today_month, today_year) = (today.day(), today.month(), today.year());
         // Iterate through the 6x7 calendar grid.
         for i in 0..42 {
             // If the current day is between the first day of the month and the last day of the month, display the day.
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
                 let day_of_week = get_date(self.year, self.month, day).weekday();
-
-                print_day = format!("{}    {}", day, day_of_week)
+                let spaces = if day > 10
+                    || day_of_week.to_string().contains("M")
+                    || day_of_week.to_string().contains("W")
+                {
+                    "    "
+                } else {
+                    "      "
+                }; // 6 and 5 spaces.
+                print_day = format!("{}{}{}", day, spaces, day_of_week)
             // Otherwise, display a blank space.
             } else {
                 day = 0;
@@ -165,7 +174,13 @@ impl<'a> Calendar {
                         .size(15),
                 )
                 .on_press(AppMessage::DayClicked(day, self.month, self.year))
-                .style(Secondary)
+                .style(
+                    if (day, self.month, self.year) == (today_day, today_month, today_year) {
+                        Primary
+                    } else {
+                        Secondary
+                    },
+                )
                 .width(settings.calendar_width())
                 .height(settings.calendar_width()),
             );
