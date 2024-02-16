@@ -187,13 +187,10 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
     // Open the data_base.
     let conn = setup_connection();
     // Get the events.
-    let events = match get_events(&conn) {
-        Ok(events) => events,
-        Err(e) => {
-            error!("Error: {}", e);
-            vec![]
-        }
-    };
+    let events = get_events(&conn).unwrap_or_else(|e| {
+        error!("Error: {}", e);
+        vec![]
+    });
     // Calculate the days since each event.
     let days_since_now = get_days_since_now(&events);
     // Calculate the elapsed days between event occurrences.

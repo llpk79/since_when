@@ -143,7 +143,7 @@ impl<'a> Calendar {
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
                 let day_of_week = get_date(self.year, self.month, day).weekday();
-                let padding = if day > 10
+                let padding = if day >= 10
                     || day_of_week.to_string().contains("M")
                     || day_of_week.to_string().contains("W")
                 {
