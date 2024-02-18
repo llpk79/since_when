@@ -2,7 +2,6 @@ use chrono::NaiveDate;
 use iced::alignment::{Horizontal, Vertical};
 use iced::theme::Button::Secondary;
 use iced::widget::{button, text, Button, Row};
-use iced::Renderer;
 use log::error;
 use std::collections::HashMap;
 
@@ -121,7 +120,7 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
     return elapsed
         .iter()
-        .map(|(name, days)| 
+        .map(|(name, days)| {
             (
                 name.to_owned(),
                 if !days.is_empty() {
@@ -130,7 +129,7 @@ pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32>
                     0
                 },
             )
-        )
+        })
         .collect();
 }
 
@@ -205,12 +204,8 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
 /// - width: `u16` - The width of the button.
 ///
 /// ### Returns
-/// - `Button<'a, AppMessage, Renderer>` - The button.
-pub fn new_button(
-    message: AppMessage,
-    label: text::Text,
-    width: u16,
-) -> Button<AppMessage, Renderer> {
+/// - `Button<AppMessage>` - The button.
+pub fn new_button(message: AppMessage, label: text::Text, width: u16) -> Button<AppMessage> {
     let settings = Settings::new();
     button(
         label
@@ -227,8 +222,8 @@ pub fn new_button(
 /// Creates a new row.
 ///
 /// ### Returns
-/// - `Row<'static, AppMessage, Renderer>`
-pub fn make_new_row() -> Row<'static, AppMessage, Renderer> {
+/// - `Row<'static, AppMessage>`
+pub fn make_new_row() -> Row<'static, AppMessage> {
     let settings = Settings::new();
     Row::new()
         .spacing(settings.spacing())

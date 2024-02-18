@@ -156,6 +156,6 @@ impl Application for SinceWhen {
     /// ### Returns
     /// - `Self::Theme`
     fn theme(&self) -> Self::Theme {
-        Theme::Dark
+        Theme::Nord
     }
 }
