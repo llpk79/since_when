@@ -43,18 +43,14 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
         // Calculate the days between the events and the current date.
         let date = get_date(event.year, event.month, event.day);
         let days = now.signed_duration_since(date).num_days() as i32;
-        if days_since_now.contains_key(&event.name) {
-            let days_vec = match days_since_now.get_mut(&event.name) {
-                Some(days_vec) => days_vec,
-                None => {
-                    error!("Error getting days vector");
-                    continue;
-                }
-            };
-            days_vec.push(days);
-            days_vec.sort();
-        } else {
-            days_since_now.insert(event.name.clone(), vec![days]);
+        match days_since_now.get_mut(&event.name) {
+            Some(days_vec) => {
+                days_vec.push(days);
+                days_vec.sort();
+            }
+            None => {
+                days_since_now.insert(event.name.clone(), vec![days]);
+            }
         };
     }
     days_since_now
@@ -87,18 +83,15 @@ pub fn get_days_since_now(events: &[EventOccurrence]) -> HashMap<String, Vec<i32
 /// assert_eq!(get_elapsed_days(&days_since), expected);
 /// ```
 pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<String, Vec<i32>> {
-    let mut elapsed: HashMap<String, Vec<i32>> = HashMap::new();
-    for items in days_since.iter() {
-        let mut days_vec: Vec<i32> = Vec::new();
-        if items.1.len() > 1 {
-            for item in 1..items.1.len() {
-                let days = items.1[item] - items.1[item - 1];
-                days_vec.push(days);
-            }
-            elapsed.entry(items.0.clone()).or_insert(days_vec);
-        }
-    }
-    elapsed
+    return days_since
+        .iter()
+        .map(|(name, days)| {
+            (
+                name.to_owned(),
+                days.windows(2).map(|w| w[1] - w[0]).collect(),
+            )
+        })
+        .collect();
 }
 
 /// Get the average elapsed days between occurrences for each event.
@@ -126,12 +119,19 @@ pub fn get_elapsed_days(days_since: &HashMap<String, Vec<i32>>) -> HashMap<Strin
 /// assert_eq!(get_averages(&averages), expected);
 /// ```
 pub fn get_averages(elapsed: &HashMap<String, Vec<i32>>) -> HashMap<String, i32> {
-    let mut averages: HashMap<String, i32> = HashMap::new();
-    for item in elapsed.iter() {
-        let average = item.1.iter().sum::<i32>() / item.1.len() as i32;
-        averages.entry(item.0.to_string()).or_insert(average);
-    }
-    averages
+    return elapsed
+        .iter()
+        .map(|(name, days)| 
+            (
+                name.to_owned(),
+                if !days.is_empty() {
+                    days.iter().sum::<i32>() / days.len() as i32
+                } else {
+                    0
+                },
+            )
+        )
+        .collect();
 }
 
 /// Sort events by days since now.
@@ -167,14 +167,10 @@ pub fn sort_events(
     events: &HashMap<String, Vec<i32>>,
     averages: &HashMap<String, i32>,
 ) -> Vec<(String, i32, i32)> {
-    let mut sorted_events = Vec::new();
-    for event in events.iter() {
-        sorted_events.push((
-            event.0.clone(),
-            event.1[0],
-            *averages.get(&event.0.clone()).unwrap_or(&0),
-        ));
-    }
+    let mut sorted_events: Vec<(String, i32, i32)> = events
+        .iter()
+        .map(|(name, days)| (name.to_owned(), days[0], *averages.get(name).unwrap_or(&0)))
+        .collect();
     sorted_events.sort_by(|a, b| a.1.cmp(&b.1));
     sorted_events
 }
@@ -187,13 +183,10 @@ pub fn event_details() -> Vec<(String, i32, i32)> {
     // Open the data_base.
     let conn = setup_connection();
     // Get the events.
-    let events = match get_events(&conn) {
-        Ok(events) => events,
-        Err(e) => {
-            error!("Error: {}", e);
-            vec![]
-        }
-    };
+    let events = get_events(&conn).unwrap_or_else(|e| {
+        error!("Error: {}", e);
+        vec![]
+    });
     // Calculate the days since each event.
     let days_since_now = get_days_since_now(&events);
     // Calculate the elapsed days between event occurrences.

@@ -1,10 +1,9 @@
-use chrono::{Datelike, Utc};
+use chrono::{Datelike, FixedOffset, Utc};
 use iced::alignment::{Horizontal, Vertical};
 use iced::theme::Button::{Primary, Secondary};
 use iced::widget::{button, row, text, Column, Row};
 use iced::{Alignment, Command, Element, Renderer};
 use num_traits::cast::FromPrimitive;
-use std::collections::HashMap;
 
 use crate::{
     app::AppMessage,
@@ -133,9 +132,9 @@ impl<'a> Calendar {
         // Variables to hold the current day and the day to display.
         let mut day: u32;
         let mut print_day: String;
-        let current_events =
-            events_by_year_month(self.year, self.month).unwrap_or_else(|_| HashMap::new());
-        let today = Utc::now();
+        let current_events = events_by_year_month(self.year, self.month).expect("events");
+        let tz_offset = FixedOffset::west_opt(8 * 60 * 60).unwrap();
+        let today = Utc::now().with_timezone(&tz_offset);
         let (today_day, today_month, today_year) = (today.day(), today.month(), today.year());
         // Iterate through the 6x7 calendar grid.
         for i in 0..42 {
@@ -143,7 +142,7 @@ impl<'a> Calendar {
             if (from_sun <= i) && (i < (last_day + from_sun)) {
                 day = (i - offset) as u32;
                 let day_of_week = get_date(self.year, self.month, day).weekday();
-                let padding = if day > 10
+                let padding = if day >= 10
                     || day_of_week.to_string().contains("M")
                     || day_of_week.to_string().contains("W")
                 {
