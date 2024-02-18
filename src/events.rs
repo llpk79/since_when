@@ -1,7 +1,6 @@
 use iced::alignment::Horizontal;
-use iced::widget::{row, text, vertical_space, Column, Text};
+use iced::widget::{row, text, Column, Text};
 use iced::Alignment;
-use iced::Element;
 
 use crate::{app::AppMessage, settings::Settings, utils};
 
@@ -60,7 +59,6 @@ impl<'a> EventsPage {
         Column<'a, AppMessage>,
         Column<'a, AppMessage>,
         Column<'a, AppMessage>,
-        u16, // number of events
     ) {
         let settings = Settings::new();
         // Create the columns.
@@ -69,9 +67,7 @@ impl<'a> EventsPage {
         let mut avg_column = Self::make_column("Avg");
         // Create the event rows.
         // event_details is a vector of tuples (event_name, days_since, average).
-        let mut num_events = 0; // for setting the height of the scrollable
         for (name, days_since, avg) in utils::event_details().iter() {
-            num_events += 1;
             // Text for the event name.
             let event_text = Text::new(name.clone())
                 .size(settings.text_size())
@@ -93,7 +89,7 @@ impl<'a> EventsPage {
                 avg_column = avg_column.push(average_text);
             }
         }
-        (event_column, days_since_column, avg_column, num_events)
+        (event_column, days_since_column, avg_column)
     }
 
     /// View the events page.
@@ -103,10 +99,10 @@ impl<'a> EventsPage {
     ///
     /// ### Returns
     /// - `Element<'a, AppMessage>` - The events page.
-    pub fn view(&self) -> Element<'a, AppMessage> {
+    pub fn view(&self) -> Column<'a, AppMessage> {
         let settings = Settings::new();
         // Get the event details and create the columns.
-        let (event_column, days_since_column, avg_column, num_events) = Self::event_columns();
+        let (event_column, days_since_column, avg_column) = Self::event_columns();
         // Align the columns into a row.
         let event_row = row![event_column, days_since_column, avg_column]
             .spacing(settings.spacing())
@@ -119,12 +115,10 @@ impl<'a> EventsPage {
         );
         // Arrange the content.
         let content = Column::new()
-            .push(vertical_space(50))
             .push(event_row)
             .push(calendar_button)
-            .push(vertical_space(num_events * 20))
             .align_items(Alignment::Center)
             .spacing(settings.spacing() + 40);
-        content.into()
+        content
     }
 }

@@ -1,6 +1,6 @@
 use iced::alignment::Horizontal;
-use iced::widget::{column, row, text, text_input};
-use iced::{Alignment, Command, Element};
+use iced::widget::{column, row, text, text_input, Column};
+use iced::{Alignment, Command};
 use log::info;
 
 use crate::{
@@ -85,7 +85,7 @@ impl<'a> AddEvent {
     ///
     /// ### Returns
     /// - `Element<'a, AppMessage>` - The AddEvent page.
-    pub fn view(&self, day: u32, month: u32, year: i32) -> Element<'a, AppMessage> {
+    pub fn view(&self, day: u32, month: u32, year: i32) -> Column<'a, AppMessage> {
         let settings = Settings::new();
         // Date and event input.
         let date = get_date(year, month, day);
@@ -133,6 +133,6 @@ impl<'a> AddEvent {
         let content = column![date_text, input, action_row, nav_row]
             .align_items(Alignment::Center)
             .spacing(settings.spacing());
-        content.into()
+        content
     }
 }

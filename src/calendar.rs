@@ -2,7 +2,7 @@ use chrono::{Datelike, FixedOffset, Utc};
 use iced::alignment::{Horizontal, Vertical};
 use iced::theme::Button::{Primary, Secondary};
 use iced::widget::{button, row, text, Column, Row};
-use iced::{Alignment, Command, Element, Renderer};
+use iced::{Alignment, Command};
 use num_traits::cast::FromPrimitive;
 
 use crate::{
@@ -75,8 +75,8 @@ impl<'a> Calendar {
     /// Instructions for the Calendar window.
     ///
     /// ### Returns
-    /// - `Row<'a, AppMessage, Renderer>` - The instructions row.
-    fn instruction_row(self) -> Row<'a, AppMessage, Renderer> {
+    /// - `Row<'a, AppMessage>` - The instructions row.
+    fn instruction_row(self) -> Row<'a, AppMessage> {
         // Text to explain what to do.
         let settings = Settings::new();
         let instructions =
@@ -91,8 +91,8 @@ impl<'a> Calendar {
     /// Creates a row with the current month and year, prev and next month buttons.
     ///
     /// ### Returns
-    /// - `Row<'a, AppMessage, Renderer>` - The navigation row.
-    fn nav_row(self) -> Row<'a, AppMessage, Renderer> {
+    /// - `Row<'a, AppMessage>` - The navigation row.
+    fn nav_row(self) -> Row<'a, AppMessage> {
         let settings = Settings::new();
         let prev_button = new_button(AppMessage::PreviousMonth, text("<"), settings.text_size());
         // Display the current month and year.
@@ -114,8 +114,8 @@ impl<'a> Calendar {
     /// Creates the Calendar view.
     ///
     /// ### Returns
-    /// - `Column<'a, AppMessage, Renderer>` - The Calendar view.
-    fn calendar(self) -> Column<'a, AppMessage, Renderer> {
+    /// - `Column<'a, AppMessage>` - The Calendar view.
+    fn calendar(self) -> Column<'a, AppMessage> {
         let settings = Settings::new();
         // Create a column to hold the Calendar.
         let mut calendar = Column::new()
@@ -197,7 +197,7 @@ impl<'a> Calendar {
     ///
     /// ### Returns
     /// - `Element<'a, AppMessage>` - The Calendar page.
-    pub fn view(self) -> Element<'a, AppMessage> {
+    pub fn view(self) -> Column<'a, AppMessage> {
         let settings = Settings::new();
         // Create a column to hold the calendar, nav buttons, and instructions.
         let content = Column::new()
@@ -211,6 +211,6 @@ impl<'a> Calendar {
             ))
             .spacing(settings.spacing())
             .align_items(Alignment::Center);
-        content.into()
+        content
     }
 }
