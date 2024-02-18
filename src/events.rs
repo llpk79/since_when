@@ -69,25 +69,24 @@ impl<'a> EventsPage {
         let mut avg_column = Self::make_column("Avg");
         // Create the event rows.
         // event_details is a vector of tuples (event_name, days_since, average).
-        let mut num_events = 0; // for setting the height of the scrollable.
-        for event in utils::event_details().iter() {
+        let mut num_events = 0; // for setting the height of the scrollable
+        for (name, days_since, avg) in utils::event_details().iter() {
             num_events += 1;
             // Text for the event name.
-            let event_text = Text::new(event.0.clone())
+            let event_text = Text::new(name.clone())
                 .size(settings.text_size())
                 .horizontal_alignment(Horizontal::Center);
             event_column = event_column.push(event_text);
             // Text for the days since.
-            let days_since = event.1;
-            let plural = if days_since != 1 { "s" } else { "" };
+            let plural = if *days_since != 1 { "s" } else { "" };
             let days_since_text =
                 Text::new(format!("{} day{} ago", days_since, plural)).size(settings.text_size());
             days_since_column = days_since_column.push(days_since_text);
             // Text for the average.
-            if event.2 != 0 {
-                let plural = if event.2 > 1 { "s" } else { "" };
+            if *avg != 0 {
+                let plural = if *avg > 1 { "s" } else { "" };
                 let average_text =
-                    Text::new(format!("{} day{}", event.2, plural)).size(settings.text_size());
+                    Text::new(format!("{} day{}", avg, plural)).size(settings.text_size());
                 avg_column = avg_column.push(average_text);
             } else {
                 let average_text = Text::new("---").size(settings.text_size());

@@ -137,19 +137,17 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
     ON events.id = occurrences.event_id \
     ORDER BY year, month, day DESC;",
     );
-    let event_iter = stmt.query_map([], |row| {
-        Ok(EventOccurrence {
-            name: row.get(0)?,
-            year: row.get(1)?,
-            month: row.get(2)?,
-            day: row.get(3)?,
-        })
-    })?;
-    let mut events = Vec::new();
-    for event in event_iter {
-        events.push(match event {
-            Ok(event) => event,
-            Err(e) => {
+    let events = stmt
+        .query_map([], |row| {
+            Ok(EventOccurrence {
+                name: row.get(0)?,
+                year: row.get(1)?,
+                month: row.get(2)?,
+                day: row.get(3)?,
+            })
+        })?
+        .map(|event| {
+            event.unwrap_or_else(|e| {
                 error!("Error retrieving record: {}", e);
                 EventOccurrence {
                     name: "".to_string(),
@@ -157,9 +155,9 @@ pub fn get_events(conn: &Connection) -> Result<Vec<EventOccurrence>> {
                     month: 0,
                     day: 0,
                 }
-            }
-        });
-    }
+            })
+        })
+        .collect();
     Ok(events)
 }
 
@@ -186,29 +184,22 @@ pub fn sql_insert(
     // Match on the flags to determine which parameters to use.
     match (id.1, date.3, event.1) {
         // Update event with a new occurrence.
-        (true, true, false) => match stmt.execute(params![id.0, date.0, date.1, date.2]) {
-            Ok(success) => success,
-            Err(e) => {
+        (true, true, false) => stmt
+            .execute(params![id.0, date.0, date.1, date.2])
+            .unwrap_or_else(|e| {
                 error!("Error: {:?}", e);
                 0
-            }
-        },
+            }),
         // Add event/delete occurrence.
-        (false, false, true) => match stmt.execute(params![event.0]) {
-            Ok(success) => success,
-            Err(e) => {
-                error!("Error: {:?}", e);
-                0
-            }
-        },
+        (false, false, true) => stmt.execute(params![event.0]).unwrap_or_else(|e| {
+            error!("Error: {:?}", e);
+            0
+        }),
         // Delete event.
-        (true, false, false) => match stmt.execute(params![id.0]) {
-            Ok(success) => success,
-            Err(e) => {
-                error!("Error: {:?}", e);
-                0
-            }
-        },
+        (true, false, false) => stmt.execute(params![id.0]).unwrap_or_else(|e| {
+            error!("Error: {:?}", e);
+            0
+        }),
         _ => 0, // This should never happen.
     };
     Ok(id.0)
@@ -228,13 +219,12 @@ pub fn get_event_id(conn: &Connection, event: &str) -> i32 {
     }
     info!("Getting event id for {:?}", event);
     let mut id_stmt = prepare_stmt(conn, "SELECT id FROM events WHERE name = ?1;");
-    let ID { id } = match id_stmt.query_row(params![event], |row| Ok(ID { id: row.get(0)? })) {
-        Ok(id) => id,
-        Err(e) => {
+    let ID { id } = id_stmt
+        .query_row(params![event], |row| Ok(ID { id: row.get(0)? }))
+        .unwrap_or_else(|e| {
             error!("Error: {:?}", e);
             ID { id: 0 }
-        }
-    };
+        });
     id
 }
 
@@ -380,28 +370,19 @@ pub fn events_by_year_month(year: i32, month: u32) -> Result<HashMap<u32, Vec<St
     })?;
     let mut events_by_year_month: HashMap<u32, Vec<String>> = HashMap::new();
     for event_result in event_iter {
-        let event = match event_result {
-            Ok(event) => event,
-            Err(e) => {
-                error!("Error getting record {}", e);
-                EventDay {
-                    name: "".to_string(),
-                    day: 0,
-                }
+        let event = event_result.unwrap_or_else(|e| {
+            error!("Error getting record {}", e);
+            EventDay {
+                name: "".to_string(),
+                day: 0,
+            }
+        });
+        match events_by_year_month.get_mut(&event.day) {
+            Some(event_vec) => event_vec.push(event.name),
+            None => {
+                events_by_year_month.insert(event.day.clone(), vec![event.name.clone()]);
             }
         };
-        if events_by_year_month.contains_key(&event.day) {
-            let event_vec = match events_by_year_month.get_mut(&event.day) {
-                Some(event_vec) => event_vec,
-                None => {
-                    error!("Error getting event vector");
-                    continue;
-                }
-            };
-            event_vec.push(event.name);
-        } else {
-            events_by_year_month.insert(event.day.clone(), vec![event.name.clone()]);
-        }
     }
     Ok(events_by_year_month)
 }
